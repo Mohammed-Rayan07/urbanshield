@@ -76,8 +76,11 @@ Implement `sim/montecarlo.py:simulate`. Model is in the docstring. Requirements:
 - Vectorised: arrays of shape (S, N). Spread over REACH by iterating *hops* (≤ N, usually < 10),
   each hop a sparse mat-mul of the frontier, never a loop over scenarios.
 - Entry: each scenario picks 1–3 exposed devices (or the strategy's `entry_points`).
-- Campaigns: `campaign_rate` of scenarios pick one CVE weighted by EPSS×carriers; all carriers of that CVE
-  are compromised together (with that CVE's odds as a single draw per scenario).
+- Campaigns: `campaign_rate` of scenarios pick one CVE weighted by EPSS×carriers and make ONE exploit draw
+  with that CVE's odds. If it fires, all carriers are compromised together and `campaign_cve[s]` = the CVE;
+  if not, `campaign_cve[s]` = None and the scenario runs as an ordinary one.
+- Common random numbers: draw every uniform for the seed up front, *then* compare with the controlled odds.
+  Applying controls must not change which random numbers are used (otherwise plan comparisons are noise).
 - Damage: device loss = criticality; cascade over DEPENDS from each lost device scaled by its
   `spread_mult` (1.0 if no control); attribute own loss + caused cascade to the device (`device_loss`).
 - Controls: apply `exploit_mult` to the device's exploit odds and `spread_mult` to what it passes on.

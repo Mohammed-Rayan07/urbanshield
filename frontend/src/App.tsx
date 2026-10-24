@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { api, useLoad } from './api'
 import AgentsScreen from './screens/AgentsScreen'
 import CityScreen from './screens/CityScreen'
 import PlansScreen from './screens/PlansScreen'
@@ -13,10 +14,16 @@ type TabId = (typeof TABS)[number]['id']
 
 export default function App() {
   const [tab, setTab] = useState<TabId>('city')
+  const [health] = useLoad(() => api.health())
   const { Screen } = TABS.find((t) => t.id === tab)!
 
   return (
     <div className="flex h-full flex-col">
+      {health?.data === 'placeholder' && (
+        <div role="status" className="bg-warn px-6 py-1 text-center text-xs font-semibold text-bg">
+          PLACEHOLDER DATA: numbers are not from the simulator yet
+        </div>
+      )}
       <header className="flex items-center gap-8 border-b border-line px-6 py-3">
         <h1 className="text-lg font-semibold tracking-tight">
           Urban<span className="text-accent">Shield</span>

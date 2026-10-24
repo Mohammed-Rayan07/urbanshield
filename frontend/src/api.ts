@@ -21,7 +21,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
+export interface Health {
+  status: string
+  version: string
+  llm_mode: 'live' | 'replay' | 'mock'
+  data: 'placeholder' | 'live'
+}
+
 export const api = {
+  health: () => request<Health>('/health'),
   city: (cityId = CITY_ID) => request<City>(`/cities/${cityId}`),
   plans: (cityId = CITY_ID) => request<Plan[]>(`/cities/${cityId}/plans`),
   startIncident: (advisoryText: string, constraintsText?: string, cityId = CITY_ID) =>

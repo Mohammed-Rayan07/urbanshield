@@ -15,13 +15,23 @@ Feasibility rules every plan must satisfy (tests check all planners):
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 
 from urbanshield.schemas import Budget, City, Constraint, ControlKind, Plan
 
 
+def tail_size(n_scenarios: int, alpha: float) -> int:
+    """Number of scenarios in the CVaR tail. The ``- 1e-9`` guards float error:
+    ``(1 - 0.95) * 100`` is ``5.000000000000004``, which must count as 5, not 6."""
+    return max(1, math.ceil((1 - alpha) * n_scenarios - 1e-9))
+
+
 def cvar(losses: np.ndarray, alpha: float) -> float:
-    """Empirical CVaR: mean of the worst ``ceil((1 - alpha) * S)`` scenario losses."""
+    """Empirical CVaR: mean of the worst ``tail_size(S, alpha)`` scenario losses.
+    Use ``tail_size`` everywhere (including the MILP's 1/((1-alpha)S) term) so the
+    optimiser and the evaluator measure the same thing."""
     raise NotImplementedError
 
 

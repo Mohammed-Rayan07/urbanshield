@@ -63,7 +63,9 @@ def _city_or_404(city_id: str) -> City:
 
 @app.get("/api/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "version": __version__, "llm_mode": settings.llm_mode}
+    # ``data`` stays "placeholder" until the routes are backed by the real pipeline; the UI
+    # shows a banner so placeholder numbers can never end up in a screenshot or the video.
+    return {"status": "ok", "version": __version__, "llm_mode": settings.llm_mode, "data": "placeholder"}
 
 
 @app.get("/api/cities/{city_id}", response_model=City)

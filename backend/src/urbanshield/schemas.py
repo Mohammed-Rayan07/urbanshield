@@ -181,7 +181,10 @@ class ScenarioLosses:
     device_ids: tuple[str, ...]
     device_loss: np.ndarray  # shape (S, N), float64, >= 0
     compromised: np.ndarray  # shape (S, N), bool
-    campaign_cve: tuple[str | None, ...]  # length S; CVE driving a campaign scenario, else None
+    # Length S. Set only when a campaign FIRED in that scenario (every carrier of the CVE
+    # is then compromised together); None for ordinary scenarios and for campaigns whose
+    # single exploit draw failed.
+    campaign_cve: tuple[str | None, ...]
 
     @property
     def total(self) -> np.ndarray:

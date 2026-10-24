@@ -33,7 +33,7 @@ fixture. Only `evaluate.py` / `compare` need `simulate()` (A delivers it ≈ h6)
 ## Tasks (in order)
 
 ### B1 · Shared helpers (target: h1)
-`opt/common.py`: `cvar` (mean of the worst ⌈(1−α)·S⌉ losses), `reduction` (r = 1 − exploit_mult × spread_mult
+`opt/common.py`: `cvar` (mean of the worst `tail_size(S, α)` losses — already written, it guards a float off-by-one; use it in the MILP too), `reduction` (r = 1 − exploit_mult × spread_mult
 for that device's option of that kind), `is_feasible` (every rule in the module docstring).
 **Done when:** `uv run pytest -k cvar_definition` passes.
 

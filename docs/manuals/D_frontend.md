@@ -33,7 +33,8 @@ cd frontend; npm ci; npm run dev     # open http://localhost:5173
 
 All endpoints you need already exist (`src/api.ts`): `city`, `plans`, `startIncident` + `useRunEvents`
 (live SSE), `approve`, `toolResult` (provenance), `quarantinePreview`, `auditEntries`, `verifyAudit`.
-They return placeholder data until the backend lands; **the shapes will not change**.
+They return placeholder data until the backend lands (a yellow **PLACEHOLDER DATA** banner shows while
+`/api/health` says `data: placeholder`); **the shapes will not change**.
 
 ## Design rules
 
@@ -64,7 +65,7 @@ clickable), `Panel`, `Badge` (category / solver / autonomy), `ProvenanceDrawer` 
 - Click a device → side panel: name, category, zone, firmware, CVEs (CVSS, EPSS, KEV badge), control
   options table (cost, downtime, autonomy).
 - Highlight devices touched by the latest run in red (later from events; for now: a prop).
-**Done when:** looks good in a 1280×720 screenshot. Save it to `docs/screenshots/city.png`.
+**Done when:** looks good at 1280×720.
 
 ### D3 · Plans screen (target: h10)
 - Top: one sentence + big number: "Same ₹ budget: worst-case loss **−X%** vs CVSS-first" (CI in small text).
@@ -74,7 +75,7 @@ clickable), `Panel`, `Badge` (category / solver / autonomy), `ProvenanceDrawer` 
   others in muted grey.
 - "What changed" chips: devices where UrbanShield's choice differs from CVSS-first (device name + control).
 - Collapsible full table of all 8 plans.
-**Done when:** screenshot saved to `docs/screenshots/plans.png`.
+**Done when:** looks good at 1280×720.
 
 ### D4 · Agents screen — the live loop (target: h14)
 - Left: timeline from `useRunEvents`. Each row: time, agent badge (own colour per agent), summary,
@@ -93,7 +94,9 @@ A panel (button on the Agents screen) titled "Try to break it":
 - "Tamper with the log" button explanation + Verify chain (the backend team provides the tamper action).
 
 ### D6 · Polish and video assets (target: h19)
-Empty/error states, focus rings, tab order, titles; check every screen at 1280×720; final screenshots.
+Empty/error states, focus rings, tab order, titles; check every screen at 1280×720.
+**Screenshots only now**, after Rayan regenerates the fixtures from the real pipeline (the banner must be gone):
+save `docs/screenshots/{city,plans,agents}.png`. Never publish placeholder numbers.
 
 ### D7 · Demo video (h20–h22, with Rayan)
 Follow `docs/DEMO_SCRIPT.md`. Record at 1280×720 with OBS, backend in `LLM_MODE=replay` so every run is
