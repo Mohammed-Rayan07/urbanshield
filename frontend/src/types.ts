@@ -120,6 +120,9 @@ export interface VerifyResult {
   entries: number
   first_bad_seq: number | null
   reason: string | null
+  head_seq: number | null
+  head_hash: string | null
+  truncated: boolean
 }
 
 export interface Advisory {
@@ -147,6 +150,13 @@ export interface QuarantinePreview {
   advisory: Advisory | null
   discrepancies: string[]
   error: string | null
+}
+
+export interface AdvisoryPreset {
+  id: string
+  kind: 'normal' | 'poisoned' | 'wrong'
+  title: string
+  text: string
 }
 
 export interface AuditEntry {

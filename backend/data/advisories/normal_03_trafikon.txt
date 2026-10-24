@@ -1,0 +1,10 @@
+Trafikon field notice TFN-2023-04 (republished)
+
+Vendor: Trafikon
+Product: TS-7 traffic signal controller
+CVE: CVE-2023-29910
+CVSS base score 4.3
+
+The TS-7 web console does not expire sessions, so a stolen session cookie stays valid
+until the controller reboots. Applies to the trafikon firmware family below 7.3.0.
+Version 7.3.0 adds a 15-minute idle timeout.
