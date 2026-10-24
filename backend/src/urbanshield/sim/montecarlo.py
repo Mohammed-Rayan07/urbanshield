@@ -73,10 +73,14 @@ def _adjacency(city: City, index: dict[str, int], kind: EdgeKind) -> sparse.csr_
 
 def _multipliers(city: City, controls: dict[str, ControlKind] | None) -> tuple[np.ndarray, np.ndarray]:
     """Per-device ``exploit_mult`` and ``spread_mult`` of the chosen controls (1.0 if none)."""
+    controls = controls or {}
+    unknown = sorted(set(controls) - {d.id for d in city.devices})
+    if unknown:
+        raise ValueError(f"controls name unknown devices: {', '.join(unknown)}")
     n = len(city.devices)
     exploit_mult, spread_mult = np.ones(n), np.ones(n)
     for i, dev in enumerate(city.devices):
-        kind = (controls or {}).get(dev.id)
+        kind = controls.get(dev.id)
         if kind is None:
             continue
         option = next((c for c in dev.controls if c.kind == kind), None)
@@ -91,9 +95,8 @@ def _base_odds(city: City) -> np.ndarray:
     return np.array([1.0 - np.prod([1.0 - v.epss for v in d.vulns]) for d in city.devices])
 
 
-def _cascade_reach(city: City, depends: sparse.csr_matrix) -> np.ndarray:
+def _cascade_reach(crit: np.ndarray, depends: sparse.csr_matrix) -> np.ndarray:
     """Sum of criticality over each device's DEPENDS descendants (itself excluded)."""
-    crit = np.array([d.criticality for d in city.devices])
     out = np.zeros(len(crit))
     for i in np.flatnonzero(np.diff(depends.indptr)):
         order = csgraph.breadth_first_order(depends, i, directed=True, return_predecessors=False)
@@ -101,9 +104,14 @@ def _cascade_reach(city: City, depends: sparse.csr_matrix) -> np.ndarray:
     return out
 
 
-def _entry_candidates(city: City, index: dict[str, int], strategy: Strategy | None, reach) -> np.ndarray:
+def _entry_candidates(
+    city: City, index: dict[str, int], strategy: Strategy | None, reach: sparse.csr_matrix
+) -> np.ndarray:
     """Entry weight per device: 0 = never an entry point."""
     if strategy is not None and strategy.entry_points:
+        unknown = sorted(set(strategy.entry_points) - set(index))
+        if unknown:
+            raise ValueError(f"strategy {strategy.id} names unknown entry points: {', '.join(unknown)}")
         weight = np.zeros(len(city.devices))
         weight[[index[d] for d in strategy.entry_points]] = 1.0
     else:
@@ -118,8 +126,10 @@ def _can_reach(reach: sparse.csr_matrix, targets: np.ndarray) -> np.ndarray:
     """Devices with a REACH path to any target (a target reaches itself): one reverse BFS
     from a virtual node wired to every target."""
     n = reach.shape[0]
-    hub = sparse.csr_matrix((np.ones(targets.sum()), (np.flatnonzero(targets), np.full(targets.sum(), n))))
-    hub.resize((n + 1, n + 1))
+    if not targets.any():
+        return np.zeros(n, dtype=bool)
+    k = int(targets.sum())
+    hub = sparse.csr_matrix((np.ones(k), (np.flatnonzero(targets), np.full(k, n))), shape=(n + 1, n + 1))
     graph = sparse.bmat([[reach, None], [None, sparse.csr_matrix((1, 1))]]).tocsr() + hub
     order = csgraph.breadth_first_order(graph.T.tocsr(), n, directed=True, return_predecessors=False)
     found = np.zeros(n + 1, dtype=bool)
@@ -132,8 +142,8 @@ def _pick_entries(weight: np.ndarray, draws: _Draws) -> np.ndarray:
     s, n = draws.entry_key.shape
     if not weight.any():
         return np.zeros((s, n), dtype=bool)
-    with np.errstate(divide="ignore"):
-        keys = np.where(weight > 0, np.log(draws.entry_key) / np.where(weight > 0, weight, 1.0), -np.inf)
+    # log(1 - u) is finite for u in [0, 1), so no candidate can tie with the -inf of a non-candidate.
+    keys = np.where(weight > 0, np.log1p(-draws.entry_key) / np.where(weight > 0, weight, 1.0), -np.inf)
     rank = np.argsort(np.argsort(-keys, axis=1, kind="stable"), axis=1, kind="stable")
     count = np.minimum(draws.entry_count, int((weight > 0).sum()))
     return rank < count[:, None]
@@ -265,7 +275,7 @@ def simulate(
     compromised = _spread(seeds, can_fall, reach, family, draws.exploit < exploit_mult[None, :])
 
     crit = np.array([d.criticality for d in city.devices])
-    per_device = crit + spread_mult * _cascade_reach(city, depends)
+    per_device = crit + spread_mult * _cascade_reach(crit, depends)
     device_loss = compromised * per_device[None, :]
 
     return ScenarioLosses(

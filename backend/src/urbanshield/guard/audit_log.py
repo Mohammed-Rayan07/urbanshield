@@ -80,6 +80,9 @@ class AuditLog:
         event_json = canonical_json(event.model_dump(mode="json"))
         payload_sha256 = _sha256(event_json)
         with closing(self._connect()) as conn, conn:
+            # Take the write lock before reading the head, so concurrent appends queue up
+            # instead of racing for the same seq.
+            conn.execute("BEGIN IMMEDIATE")
             last = conn.execute("SELECT seq, hash FROM audit_log ORDER BY seq DESC LIMIT 1").fetchone()
             seq, prev_hash = (last[0] + 1, last[1]) if last else (0, GENESIS)
             digest = _chain_hash(prev_hash, payload_sha256, seq)
