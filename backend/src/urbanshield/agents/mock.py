@@ -162,7 +162,50 @@ def _claims(messages: list[dict[str, Any]]) -> tuple[str | None, list[ToolCallRe
     return json.dumps({"claims": claims}, sort_keys=True), []
 
 
+# --------------------------------------------------------------------------- redteam.propose
+
+
+def _redteam(messages: list[dict[str, Any]]) -> tuple[str | None, list[ToolCallRequest]]:
+    """Attacker heuristics over the context: re-test earlier holes first, then unprotected exposed
+    footholds that reach the corridor, the largest unpatched firmware family, the KEV CVE with most
+    unprotected carriers, unprotected EV-charger gateways, and a plain push towards the signals."""
+    ctx = _user_json(messages)
+    devices = ctx["devices"]
+    open_ = [d for d in devices if d["control"] != "patch"]  # weaker controls still leave a way in
+    wanted: list[dict[str, Any]] = [p["strategy"] for p in ctx["previous_probes"] if p["hole"]]
+
+    footholds = [d["id"] for d in open_ if d["exposed"] and d["reaches_corridor"]]
+    if footholds:
+        wanted.append({"entry_points": footholds[:1], "target_category": "signal"})
+
+    families: dict[str, list[dict[str, Any]]] = {}
+    for d in devices:
+        if d["control"] != "patch":
+            families.setdefault(d["firmware_family"], []).append(d)
+    _, members = max(families.items(), key=lambda kv: (len(kv[1]), kv[0]), default=("", []))
+    if len(members) >= 2:
+        entry = [d["id"] for d in members if d["exposed"]][:1]
+        wanted.append({"entry_points": entry, "pivot_shared_firmware": True})
+
+    carriers: dict[str, int] = {}
+    for d in open_:
+        for cve in d["kev_cves"]:
+            carriers[cve] = carriers.get(cve, 0) + 1
+    if carriers:
+        cve = max(carriers.items(), key=lambda kv: (kv[1], kv[0]))[0]
+        wanted.append({"campaign_cve": cve})
+
+    gateways = [d["id"] for d in open_ if d["category"] == "ev_charger" and d["reaches_corridor"]]
+    if gateways:
+        wanted.append({"entry_points": gateways[:3], "target_category": "signal"})
+    wanted.append({"target_category": "signal"})
+
+    unique = list({json.dumps(w, sort_keys=True): w for w in wanted}.values())[:5]
+    return json.dumps({"strategies": unique}, sort_keys=True), []
+
+
 RESPONDERS: dict[str, Responder] = {
+    "redteam.propose": _redteam,
     "sentinel.extract": _extract,
     "analyst.step": _analyst,
     "planner.constraints": _constraints,

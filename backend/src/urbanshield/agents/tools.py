@@ -75,6 +75,9 @@ class RunContext:
     candidate: Plan | None = None
     results: dict[str, ToolResult] = field(default_factory=dict)
     untrusted: dict[str, str] = field(default_factory=dict)  # sha256 -> raw advisory text
+    redteam_seed: int = 3  # probe scenarios: neither the training nor the test seed
+    redteam_sim_calls: int = 0  # simulator calls spent by the Red-Team (outcome-verification metric)
+    redteam_baselines: dict[str, ScenarioLosses] = field(default_factory=dict)  # plan id -> scenarios
     _tool_seq: itertools.count = field(default_factory=lambda: itertools.count(1))
     _event_seq: itertools.count = field(default_factory=lambda: itertools.count(1))
     _graphs: Any = None
@@ -120,6 +123,10 @@ class RunContext:
                 self.city, n_scenarios=self.n_scenarios, seed=self.engine.train_seed
             )
         return self._train
+
+    def set_train(self, losses: ScenarioLosses) -> None:
+        """Replace the training scenarios (the Red-Team's replan adds attack scenarios)."""
+        self._train = losses
 
 
 # --------------------------------------------------------------------------- argument models
