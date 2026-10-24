@@ -1,0 +1,371 @@
+{
+  "generated": "2026-10-24",
+  "records": [
+    {
+      "cve_id": "CVE-2011-4723",
+      "cvss": 5.7,
+      "epss": 0.03064,
+      "kev": true,
+      "product": "DIR-300 Router",
+      "summary": "The D-Link DIR-300 router stores cleartext passwords, which allows context-dependent attackers to obtain sensitive information via unspecified vectors.",
+      "vendor": "D-Link"
+    },
+    {
+      "cve_id": "CVE-2013-5223",
+      "cvss": 5.4,
+      "epss": 0.50833,
+      "kev": true,
+      "product": "DSL-2760U",
+      "summary": "Multiple cross-site scripting (XSS) vulnerabilities in D-Link DSL-2760U Gateway (Rev. E1) allow remote authenticated users to inject arbitrary web script or HTML via the (1) ntpServer1 parameter to sntpcfg.cgi, username parameter to (2) ddnsmngr.cmd or (3) todmngr.tod, (4) TodUrlAdd parameter to urlfilter.cmd, (5) appName parameter to scprttrg.cmd, (6) fltName in an add action or (7) rmLst parameter in a remove action to scoutflt.cmd, (8) groupName parameter to portmapcfg.cmd, (9) snmpRoCommunity parameter to snmpconfig.cgi, (10) fltName parameter to scinflt.cmd, (11) PolicyName in an add action or (12) rmLst parameter in a remove action to prmngr.cmd, (13) ippName parameter to ippcfg.cmd, (14) smbNetBiosName or (15) smbDirName parameter to samba.cgi, or (16) wlSsid parameter to wlcfg.wl.",
+      "vendor": "D-Link"
+    },
+    {
+      "cve_id": "CVE-2016-4523",
+      "cvss": 7.5,
+      "epss": 0.31167,
+      "kev": true,
+      "product": "VTScada (formerly VTS)",
+      "summary": "The WAP interface in Trihedral VTScada (formerly VTS) 8.x through 11.x before 11.2.02 allows remote attackers to cause a denial of service (out-of-bounds read and application crash) via unspecified vectors.",
+      "vendor": "Trihedral"
+    },
+    {
+      "cve_id": "CVE-2016-8562",
+      "cvss": 7.5,
+      "epss": 0.0361,
+      "kev": true,
+      "product": "SIMATIC CP",
+      "summary": "A vulnerability has been identified in SIMATIC CP 1543-1 (All versions < V2.0.28), SIPLUS NET CP 1543-1 (All versions < V2.0.28). Under special conditions it was possible to write SNMP variables on port 161/udp which should be read-only and should only be configured with TIA-Portal. A write to these variables could reduce the availability or cause a denial-of-service.",
+      "vendor": "Siemens"
+    },
+    {
+      "cve_id": "CVE-2017-5521",
+      "cvss": 8.1,
+      "epss": 0.89353,
+      "kev": true,
+      "product": "Multiple Devices",
+      "summary": "An issue was discovered on NETGEAR R8500, R8300, R7000, R6400, R7300, R7100LG, R6300v2, WNDR3400v3, WNR3500Lv2, R6250, R6700, R6900, and R8000 devices. They are prone to password disclosure via simple crafted requests to the web management server. The bug is exploitable remotely if the remote management option is set, and can also be exploited given access to the router over LAN or WLAN. When trying to access the web panel, a user is asked to authenticate; if the authentication is canceled and password recovery is not enabled, the user is redirected to a page that exposes a password recovery token. If a user supplies the correct token to the page /passwordrecovered.cgi?id=TOKEN (and password recovery is not enabled), they will receive the admin password for the router. If password recovery is set the exploit will fail, as it will ask the user for the recovery questions that were previously set when enabling that feature. This is persistent (even after disabling the recovery option, the exploit will fail) because the router will ask for the security questions.",
+      "vendor": "NETGEAR"
+    },
+    {
+      "cve_id": "CVE-2017-6334",
+      "cvss": 8.8,
+      "epss": 0.7264,
+      "kev": true,
+      "product": "DGN2200 Devices",
+      "summary": "dnslookup.cgi on NETGEAR DGN2200 devices with firmware through 10.0.0.50 allows remote authenticated users to execute arbitrary OS commands via shell metacharacters in the host_name field of an HTTP POST request, a different vulnerability than CVE-2017-6077.",
+      "vendor": "NETGEAR"
+    },
+    {
+      "cve_id": "CVE-2018-4063",
+      "cvss": 8.8,
+      "epss": 0.2726,
+      "kev": true,
+      "product": "AirLink ALEOS",
+      "summary": "An exploitable remote code execution vulnerability exists in the upload.cgi functionality of Sierra Wireless AirLink ES450 FW 4.9.3. A specially crafted HTTP request can upload a file, resulting in executable code being uploaded, and routable, to the webserver. An attacker can make an authenticated HTTP request to trigger this vulnerability.",
+      "vendor": "Sierra Wireless"
+    },
+    {
+      "cve_id": "CVE-2018-7841",
+      "cvss": 9.8,
+      "epss": 0.72675,
+      "kev": true,
+      "product": "U.motion Builder",
+      "summary": "A SQL Injection (CWE-89) vulnerability exists in U.motion Builder software version 1.3.4 which could cause unwanted code execution when an improper set of characters is entered.",
+      "vendor": "Schneider Electric"
+    },
+    {
+      "cve_id": "CVE-2020-26919",
+      "cvss": 9.8,
+      "epss": 0.57468,
+      "kev": true,
+      "product": "JGS516PE Devices",
+      "summary": "NETGEAR JGS516PE devices before 2.6.0.43 are affected by lack of access control at the function level.",
+      "vendor": "NETGEAR"
+    },
+    {
+      "cve_id": "CVE-2020-8515",
+      "cvss": 9.8,
+      "epss": 0.99993,
+      "kev": true,
+      "product": "Multiple Vigor Routers",
+      "summary": "DrayTek Vigor2960 1.3.1_Beta, Vigor3900 1.4.4_Beta, and Vigor300B 1.3.3_Beta, 1.4.2.1_Beta, and 1.4.4_Beta devices allow remote code execution as root (without authentication) via shell metacharacters to the cgi-bin/mainfunction.cgi URI. This issue has been fixed in Vigor3900/2960/300B v1.5.1.",
+      "vendor": "DrayTek"
+    },
+    {
+      "cve_id": "CVE-2021-20123",
+      "cvss": 7.5,
+      "epss": 0.90234,
+      "kev": true,
+      "product": "VigorConnect",
+      "summary": "A local file inclusion vulnerability exists in Draytek VigorConnect 1.6.0-B3 in the file download functionality of the DownloadFileServlet endpoint. An unauthenticated attacker could leverage this vulnerability to download arbitrary files from the underlying operating system with root privileges.",
+      "vendor": "DrayTek"
+    },
+    {
+      "cve_id": "CVE-2021-20124",
+      "cvss": 7.5,
+      "epss": 0.96308,
+      "kev": true,
+      "product": "VigorConnect",
+      "summary": "A local file inclusion vulnerability exists in Draytek VigorConnect 1.6.0-B3 in the file download functionality of the WebServlet endpoint. An unauthenticated attacker could leverage this vulnerability to download arbitrary files from the underlying operating system with root privileges.",
+      "vendor": "DrayTek"
+    },
+    {
+      "cve_id": "CVE-2021-31755",
+      "cvss": 9.8,
+      "epss": 0.86511,
+      "kev": true,
+      "product": "AC11 Router",
+      "summary": "An issue was discovered on Tenda AC11 devices with firmware through 02.03.01.104_CN. A stack buffer overflow vulnerability in /goform/setmac allows attackers to execute arbitrary code on the system via a crafted post request.",
+      "vendor": "Tenda"
+    },
+    {
+      "cve_id": "CVE-2021-33045",
+      "cvss": 9.8,
+      "epss": 0.99593,
+      "kev": true,
+      "product": "IP Camera Firmware",
+      "summary": "The identity authentication bypass vulnerability found in some Dahua products during the login process. Attackers can bypass device identity authentication by constructing malicious data packets.",
+      "vendor": "Dahua"
+    },
+    {
+      "cve_id": "CVE-2021-35395",
+      "cvss": 9.8,
+      "epss": 0.981,
+      "kev": true,
+      "product": "AP-Router SDK",
+      "summary": "Realtek Jungle SDK version v2.x up to v3.4.14B provides an HTTP web server exposing a management interface that can be used to configure the access point. Two versions of this management interface exists: one based on Go-Ahead named webs and another based on Boa named boa. Both of them are affected by these vulnerabilities. Specifically, these binaries are vulnerable to the following issues: - stack buffer overflow in formRebootCheck due to unsafe copy of submit-url parameter - stack buffer overflow in formWsc due to unsafe copy of submit-url parameter - stack buffer overflow in formWlanMultipleAP due to unsafe copy of submit-url parameter - stack buffer overflow in formWlSiteSurvey due to unsafe copy of ifname parameter - stack buffer overflow in formStaticDHCP due to unsafe copy of hostname parameter - stack buffer overflow in formWsc due to unsafe copy of 'peerPin' parameter - arbitrary command execution in formSysCmd via the sysCmd parameter - arbitrary command injection in formWsc via the 'peerPin' parameter Exploitability of identified issues will differ based on what the end vendor/manufacturer did with the Realtek SDK webserver. Some vendors use it as-is, others add their own authentication implementation, some kept all the features from the server, some remove some of them, some inserted their own set of features. However, given that Realtek SDK implementation is full of insecure calls and that developers tends to re-use those examples in their custom code, any binary based on Realtek SDK webserver will probably contains its own set of issues on top of the Realtek ones (if kept). Successful exploitation of these issues allows remote attackers to gain arbitrary code execution on the device.",
+      "vendor": "Realtek"
+    },
+    {
+      "cve_id": "CVE-2021-36260",
+      "cvss": 9.8,
+      "epss": 0.99869,
+      "kev": true,
+      "product": "Security cameras web server",
+      "summary": "A command injection vulnerability in the web server of some Hikvision product. Due to the insufficient input validation, attacker can exploit the vulnerability to launch a command injection attack by sending some messages with malicious commands.",
+      "vendor": "Hikvision"
+    },
+    {
+      "cve_id": "CVE-2021-36380",
+      "cvss": 9.8,
+      "epss": 0.97832,
+      "kev": true,
+      "product": "SureLine",
+      "summary": "Sunhillo SureLine before 8.7.0.1.1 allows Unauthenticated OS Command Injection via shell metacharacters in ipAddr or dnsAddr /cgi/networkDiag.cgi.",
+      "vendor": "Sunhillo"
+    },
+    {
+      "cve_id": "CVE-2022-40799",
+      "cvss": 8.8,
+      "epss": 0.3365,
+      "kev": true,
+      "product": "DNR-322L",
+      "summary": "Data Integrity Failure in 'Backup Config' in D-Link DNR-322L <= 2.60B15 allows an authenticated attacker to execute OS level commands on the device.",
+      "vendor": "D-Link"
+    },
+    {
+      "cve_id": "CVE-2023-33538",
+      "cvss": 8.8,
+      "epss": 0.41606,
+      "kev": true,
+      "product": "Multiple Routers",
+      "summary": "TP-Link TL-WR940N V2/V4, TL-WR841N V8/V10, and TL-WR740N V1/V2 was discovered to contain a command injection vulnerability via the component /userRpm/WlanNetworkRpm .",
+      "vendor": "TP-Link"
+    },
+    {
+      "cve_id": "CVE-2023-50224",
+      "cvss": 6.5,
+      "epss": 0.20021,
+      "kev": true,
+      "product": "TL-WR841N",
+      "summary": "TP-Link TL-WR841N dropbearpwd Improper Authentication Information Disclosure Vulnerability. This vulnerability allows network-adjacent attackers to disclose sensitive information on affected installations of TP-Link TL-WR841N routers. Authentication is not required to exploit this vulnerability. The specific flaw exists within the httpd service, which listens on TCP port 80 by default. The issue results from improper authentication. An attacker can leverage this vulnerability to disclose stored credentials, leading to further compromise. Was ZDI-CAN-19899.",
+      "vendor": "TP-Link"
+    },
+    {
+      "cve_id": "CVE-2024-0769",
+      "cvss": 5.3,
+      "epss": 0.82714,
+      "kev": true,
+      "product": "DIR-859 Router",
+      "summary": "** UNSUPPORTED WHEN ASSIGNED ** A vulnerability was found in D-Link DIR-859 1.06B01. It has been rated as critical. Affected by this issue is some unknown functionality of the file /hedwig.cgi of the component HTTP POST Request Handler. The manipulation of the argument service with the input ../../../../htdocs/webinc/getcfg/DHCPS6.BRIDGE-1.xml leads to path traversal. The attack may be launched remotely. The exploit has been disclosed to the public and may be used. VDB-251666 is the identifier assigned to this vulnerability. NOTE: This vulnerability only affects products that are no longer supported by the maintainer. NOTE: Vendor was contacted early and confirmed immediately that the product is end-of-life. It should be retired and replaced.",
+      "vendor": "D-Link"
+    },
+    {
+      "cve_id": "CVE-2024-11120",
+      "cvss": 9.8,
+      "epss": 0.28386,
+      "kev": true,
+      "product": "Multiple Devices",
+      "summary": "Certain EOL GeoVision devices have an OS Command Injection vulnerability. Unauthenticated remote attackers can exploit this vulnerability to inject and execute arbitrary system commands on the device. Moreover, this vulnerability has already been exploited by attackers, and we have received related reports.",
+      "vendor": "GeoVision"
+    },
+    {
+      "cve_id": "CVE-2024-11667",
+      "cvss": 7.5,
+      "epss": 0.02929,
+      "kev": true,
+      "product": "Multiple Firewalls",
+      "summary": "A directory traversal vulnerability in the web management interface of Zyxel ATP series firmware versions V5.00 through V5.38, USG FLEX series firmware versions V5.00 through V5.38, USG FLEX 50(W) series firmware versions V5.10 through V5.38, and USG20(W)-VPN series firmware versions V5.10 through V5.38 could allow an attacker to download or upload files via a crafted URL.",
+      "vendor": "Zyxel"
+    },
+    {
+      "cve_id": "CVE-2024-12987",
+      "cvss": 7.3,
+      "epss": 0.98163,
+      "kev": true,
+      "product": "Vigor Routers",
+      "summary": "A vulnerability, which was classified as critical, was found in DrayTek Vigor2960 and Vigor300B 1.5.1.4. Affected is an unknown function of the file /cgi-bin/mainfunction.cgi/apmcfgupload of the component Web Management Interface. The manipulation of the argument session leads to os command injection. It is possible to launch the attack remotely. The exploit has been disclosed to the public and may be used. Upgrading to version 1.5.1.5 is able to address this issue. It is recommended to upgrade the affected component.",
+      "vendor": "DrayTek"
+    },
+    {
+      "cve_id": "CVE-2024-3272",
+      "cvss": 9.8,
+      "epss": 0.98109,
+      "kev": true,
+      "product": "Multiple NAS Devices",
+      "summary": "** UNSUPPORTED WHEN ASSIGNED ** A vulnerability, which was classified as very critical, has been found in D-Link DNS-320L, DNS-325, DNS-327L and DNS-340L up to 20240403. This issue affects some unknown processing of the file /cgi-bin/nas_sharing.cgi of the component HTTP GET Request Handler. The manipulation of the argument user with the input messagebus leads to hard-coded credentials. The attack may be initiated remotely. The exploit has been disclosed to the public and may be used. The associated identifier of this vulnerability is VDB-259283. NOTE: This vulnerability only affects products that are no longer supported by the maintainer. NOTE: Vendor was contacted early and confirmed immediately that the product is end-of-life. It should be retired and replaced.",
+      "vendor": "D-Link"
+    },
+    {
+      "cve_id": "CVE-2024-3273",
+      "cvss": 7.3,
+      "epss": 0.99995,
+      "kev": true,
+      "product": "Multiple NAS Devices",
+      "summary": "** UNSUPPORTED WHEN ASSIGNED ** A vulnerability, which was classified as critical, was found in D-Link DNS-320L, DNS-325, DNS-327L and DNS-340L up to 20240403. Affected is an unknown function of the file /cgi-bin/nas_sharing.cgi of the component HTTP GET Request Handler. The manipulation of the argument system leads to command injection. It is possible to launch the attack remotely. The exploit has been disclosed to the public and may be used. The identifier of this vulnerability is VDB-259284. NOTE: This vulnerability only affects products that are no longer supported by the maintainer. NOTE: Vendor was contacted early and confirmed immediately that the product is end-of-life. It should be retired and replaced.",
+      "vendor": "D-Link"
+    },
+    {
+      "cve_id": "CVE-2024-40890",
+      "cvss": 8.8,
+      "epss": 0.20703,
+      "kev": true,
+      "product": "DSL CPE Devices",
+      "summary": "**UNSUPPORTED WHEN ASSIGNED**\nA post-authentication command injection vulnerability in the CGI program of the legacy DSL CPE Zyxel VMG4325-B10A firmware version 1.00(AAFR.4)C0_20170615 could allow an authenticated attacker to execute operating system (OS) commands on an affected device by sending a crafted HTTP POST request.",
+      "vendor": "Zyxel"
+    },
+    {
+      "cve_id": "CVE-2024-40891",
+      "cvss": 8.8,
+      "epss": 0.22888,
+      "kev": true,
+      "product": "DSL CPE Devices",
+      "summary": "**UNSUPPORTED WHEN ASSIGNED**\nA post-authentication command injection vulnerability in the management commands of the legacy DSL CPE Zyxel VMG4325-B10A firmware version 1.00(AAFR.4)C0_20170615 could allow an authenticated attacker to execute operating system (OS) commands on an affected device via Telnet.",
+      "vendor": "Zyxel"
+    },
+    {
+      "cve_id": "CVE-2024-6047",
+      "cvss": 9.8,
+      "epss": 0.10072,
+      "kev": true,
+      "product": "Multiple Devices",
+      "summary": "Certain EOL GeoVision devices fail to properly filter user input for the specific functionality. Unauthenticated remote attackers can exploit this vulnerability to inject and execute arbitrary system commands on the device.",
+      "vendor": "GeoVision"
+    },
+    {
+      "cve_id": "CVE-2025-1316",
+      "cvss": 9.8,
+      "epss": 0.74482,
+      "kev": true,
+      "product": "IC-7100 IP Camera",
+      "summary": "Edimax IC-7100 does not properly neutralize requests. An attacker can create specially crafted requests to achieve remote code execution on the device",
+      "vendor": "Edimax"
+    },
+    {
+      "cve_id": "CVE-2025-29635",
+      "cvss": 7.2,
+      "epss": 0.87944,
+      "kev": true,
+      "product": "DIR-823X",
+      "summary": "A command injection vulnerability in D-Link DIR-823X 240126 and 240802 allows an authorized attacker to execute arbitrary commands on remote devices by sending a POST request to /goform/set_prohibiting via the corresponding function, triggering remote command execution.",
+      "vendor": "D-Link"
+    },
+    {
+      "cve_id": "CVE-2025-9377",
+      "cvss": 7.2,
+      "epss": 0.37731,
+      "kev": true,
+      "product": "Multiple Routers",
+      "summary": "The authenticated remote command execution (RCE) vulnerability exists  in the Parental Control page on TP-Link Archer C7(EU) V2 and TL-WR841N/ND(MS) V9.\n\nThis issue affects Archer C7(EU) V2: before 241108 and TL-WR841N/ND(MS) V9: before 241108.\n\nBoth products have reached the status of EOL (end-of-life).\nIt's recommending to \n\npurchase the new \nproduct to ensure better performance and security. If replacement is not\n an option in the short term, please use the second reference link to \ndownload and install the patch(es).",
+      "vendor": "TP-Link"
+    },
+    {
+      "cve_id": "CVE-2026-110936",
+      "cvss": 6.7,
+      "epss": 0.00238,
+      "kev": true,
+      "product": "Software Center",
+      "summary": "A vulnerability has been identified in Siemens Software Center (All versions < V4.0.9.8). The affected application loads dynamic-link libraries (DLLs) from an uncontrolled search path. This could allow an authenticated local attacker to place a specially crafted DLL in a directory that the application searches, leading to arbitrary code execution with the privileges of the affected application.",
+      "vendor": "Siemens"
+    },
+    {
+      "cve_id": "CVE-2026-34908",
+      "cvss": 10.0,
+      "epss": 0.15207,
+      "kev": true,
+      "product": "UniFi OS",
+      "summary": "A malicious actor with access to the network could exploit an Improper Access Control vulnerability found in UniFi OS devices to make unauthorized changes to the system.",
+      "vendor": "Ubiquiti"
+    },
+    {
+      "cve_id": "CVE-2026-34909",
+      "cvss": 10.0,
+      "epss": 0.01793,
+      "kev": true,
+      "product": "UniFi OS",
+      "summary": "A malicious actor with access to the network could exploit a Path Traversal vulnerability found in UniFi OS devices to access files on the underlying system that could be manipulated to access an underlying account.",
+      "vendor": "Ubiquiti"
+    },
+    {
+      "cve_id": "CVE-2026-34910",
+      "cvss": 10.0,
+      "epss": 0.45768,
+      "kev": true,
+      "product": "UniFi OS",
+      "summary": "A malicious actor with access to the network could exploit an Improper Input Validation vulnerability found in UniFi OS devices to execute a Command Injection.",
+      "vendor": "Ubiquiti"
+    },
+    {
+      "cve_id": "CVE-2026-67277",
+      "cvss": 8.2,
+      "epss": 0.0156,
+      "kev": true,
+      "product": "RouterOS",
+      "summary": "RouterOS accepts a \"related\" btest connection before the corresponding primary session has completed authentication. An unauthenticated client can use this state to start an IPv4 UDP test. With \"random-data=false\", the sender transmits an uninitialized tail from a kernel packet buffer. A separate unchecked, inverted packet-size interval causes unsigned integer underflow, anomalously large fragmented output, and can restart the RouterOS kernel.\n\n\n\nThis issue was fixed in versions: 6.49.21 (Long-term), 7.23.4 (Long-term) and 7.24.2 (Stable)",
+      "vendor": "MikroTik"
+    },
+    {
+      "cve_id": "CVE-2026-67279",
+      "cvss": 6.5,
+      "epss": 0.01046,
+      "kev": true,
+      "product": "RouterOS",
+      "summary": "RouterOS SSH enters the connection protocol after a client-requested rekey even though user authentication was never attempted, allowing an unauthenticated client to open a session channel and send an exec request. On affected builds the server dispatches the command, enabling unauthenticated creation, overwrite, and reconstruction of files in the RouterOS managed file namespace, including support files containing configuration and diagnostic data.This issue was fixed in versions: 6.49.21 (Long-term), 7.23.4 (Long-term) and 7.24.2 (Stable)",
+      "vendor": "MikroTik"
+    },
+    {
+      "cve_id": "CVE-2026-7273",
+      "cvss": 8.8,
+      "epss": 0.02501,
+      "kev": true,
+      "product": "GS1900 Series Switches",
+      "summary": "A stack-based buffer overflow vulnerability in the CGI program of Zyxel GS1900-48HPv2 firmware versions through 2.90(ABTQ.1)C0 could allow a LAN-based, unauthenticated attacker to exploit the flaw and potentially execute OS commands via a crafted HTTP request.",
+      "vendor": "Zyxel"
+    },
+    {
+      "cve_id": "CVE-2026-86060",
+      "cvss": 9.8,
+      "epss": 0.06392,
+      "kev": true,
+      "product": "RouterOS",
+      "summary": "RouterOS contains an argument-handling flaw in the SSH login\npath involving usernames that begin with a prohibited character, allowing for the trusted RouterOS policy mask to be changed, leading to privilege escalation. Exploitation requires an unauthenticated SSH session to reach the RouterOS login helper.This issue was fixed in versions: 6.49.21 (Long-term), 7.23.4 (Long-term) and 7.24.2 (Stable)",
+      "vendor": "MikroTik"
+    }
+  ],
+  "selection": "CISA KEV entries for embedded IoT/OT vendors, balanced by CVSS band and vendor",
+  "sources": [
+    "cisa-kev",
+    "first-epss",
+    "nvd"
+  ]
+}

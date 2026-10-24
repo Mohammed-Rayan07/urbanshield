@@ -139,3 +139,110 @@ def test_tampered_feed_is_refused(tmp_path) -> None:
     feed.write_text(feed.read_text(encoding="utf-8").replace("6.1", "1.0"), encoding="utf-8")
     with pytest.raises(FeedIntegrityError):
         load_feed(feed, pin)
+
+
+# ---------------------------------------------------------------- demo story and hardening
+
+
+def test_decoys_are_fully_isolated(city) -> None:
+    decoys = {d.id for d in city.devices if "decorative" in d.tags}
+    assert decoys
+    assert not [e for e in city.edges if e.src in decoys or e.dst in decoys]
+
+
+def test_shared_cve_is_unique_to_the_family(city) -> None:
+    family = [d for d in city.devices if d.firmware.startswith("lumenos/4.1")]
+    (shared,) = {v.cve_id for v in family[0].vulns}
+    carriers = {d.id for d in city.devices if any(v.cve_id == shared for v in d.vulns)}
+    assert carriers == {d.id for d in family}
+    assert len({v.cve_id for d in city.devices for v in d.vulns}) >= 15, "real CVE diversity"
+
+
+def test_gateways_are_the_only_way_from_the_family_to_the_corridor(city) -> None:
+    g = build_graphs(city)
+    family = [d.id for d in city.devices if d.firmware.startswith("lumenos/4.1")]
+    corridor = {d.id for d in city.devices if "ambulance_corridor" in d.tags}
+    gateways = [d.id for d in city.devices if "gateway" in d.tags]
+    assert corridor & bfs_reach(g, family)
+    assert not corridor & bfs_reach(g, family, blocked=gateways), "segmenting gateways must cut the path"
+
+
+def test_decoy_cve_is_critical_but_unlikely(city) -> None:
+    decoy = next(d for d in city.devices if "decorative" in d.tags).vulns[0]
+    family = next(d for d in city.devices if d.firmware.startswith("lumenos/4.1")).vulns[0]
+    assert decoy.cvss >= 9.0 > family.cvss
+    assert decoy.epss < family.epss, "the CVSS-first trap: higher score, lower real-world likelihood"
+
+
+def test_feed_without_a_needed_band_raises() -> None:
+    from urbanshield.schemas import Vulnerability
+
+    only_low = {"CVE-2024-0001": Vulnerability(cve_id="CVE-2024-0001", cvss=4.1, epss=0.1)}
+    with pytest.raises(ValueError, match="family"):
+        generate_city(feed=only_low)
+
+
+def test_unknown_device_ids_raise(tiny_city) -> None:
+    g = build_graphs(tiny_city)
+    with pytest.raises(KeyError):
+        bfs_reach(g, ["d-999"])
+    with pytest.raises(KeyError):
+        blast_radius(g, "d-999")
+
+
+def test_feed_record_fails_closed_without_pin(tmp_path) -> None:
+    from urbanshield.city.feeds import feed_record
+
+    feed, pin = _write_feed(tmp_path)
+    assert feed_record("CVE-2025-31337", feed, pin)["vendor"] == "Lumenos"
+    assert feed_record("CVE-2099-0001", feed, pin) is None
+    pin.unlink()
+    with pytest.raises(FeedIntegrityError):
+        feed_record("CVE-2025-31337", feed, pin)
+
+
+def test_feed_record_refuses_tampered_or_missing_feed(tmp_path) -> None:
+    from urbanshield.city.feeds import feed_record
+
+    feed, pin = _write_feed(tmp_path)
+    feed.write_text(feed.read_text(encoding="utf-8").replace("6.1", "1.0"), encoding="utf-8")
+    with pytest.raises(FeedIntegrityError):
+        feed_record("CVE-2025-31337", feed, pin)
+    feed.unlink()
+    with pytest.raises(FeedIntegrityError):
+        feed_record("CVE-2025-31337", feed, pin)
+
+
+def test_duplicate_records_are_refused(tmp_path) -> None:
+    feed, pin = _write_feed(tmp_path)
+    payload = json.loads(feed.read_text(encoding="utf-8"))
+    payload["records"] *= 2
+    feed.write_text(json.dumps(payload), encoding="utf-8")
+    pin.write_text(sha256_file(feed), encoding="utf-8")
+    with pytest.raises(FeedIntegrityError, match="duplicate"):
+        load_feed(feed, pin)
+
+
+def test_committed_snapshot_matches_code_pin() -> None:
+    from urbanshield.city.feeds import FEED_HASH_PATH, FEED_PATH, FEED_SHA256
+
+    assert sha256_file(FEED_PATH) == FEED_SHA256
+    assert FEED_HASH_PATH.read_text(encoding="utf-8").split()[0] == FEED_SHA256
+    assert len(load_feed()) >= 30
+
+
+def test_too_small_for_the_demo_structure_raises() -> None:
+    with pytest.raises(ValueError, match="at least"):
+        generate_city(n_devices=20)
+
+
+@pytest.mark.slow
+def test_scales_to_5000_devices() -> None:
+    import time
+
+    big = generate_city(seed=1, n_devices=5000)
+    graphs = build_graphs(big)
+    t = time.perf_counter()
+    centrality = reach_centrality(graphs)  # was 34 s with a per-node Python BFS
+    assert len(big.devices) == len(centrality) == 5000
+    assert time.perf_counter() - t < 5
