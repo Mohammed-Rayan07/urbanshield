@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from urbanshield.agents.evidence import replace_section
 from urbanshield.city.generator import generate_city
 from urbanshield.config import BACKEND_DIR
-from urbanshield.opt._model import option_table
+from urbanshield.opt._model import CALIBRATE_MAX_OPTIONS, option_table
 from urbanshield.opt.common import cvar
 from urbanshield.opt.cvar import solve
 from urbanshield.opt.greedy import greedy_tail
@@ -83,9 +83,11 @@ def run() -> tuple[list[dict], str]:
         )
     lines += [
         "",
-        f"MILP: HiGHS with a {TIME_LIMIT_S:g} s limit; on timeout it returns its best incumbent "
-        "(still `milp`), and only with no incumbent falls back to the greedy plan (`greedy`). "
-        "Budget scales with city size (₹12,000 and 0.5 h per device).",
+        f"MILP: HiGHS with a {TIME_LIMIT_S:g} s limit; a time-limited incumbent is kept (`milp`) only if it "
+        "beats the greedy plan, otherwise the greedy plan is returned (`greedy`). Below "
+        f"{CALIBRATE_MAX_OPTIONS:,} options both planners first calibrate the option savings (one "
+        "simulation per option), which is most of their time at 50 devices; larger cities use the "
+        "linear savings model. Budget scales with city size (₹12,000 and 0.5 h per device).",
         "",
         "![Scalability benchmark](bench.png)",
     ]

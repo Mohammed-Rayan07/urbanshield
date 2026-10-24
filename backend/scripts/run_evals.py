@@ -101,7 +101,8 @@ def perturbed(city: City, seed: int) -> City:
 
 def sensitivity(city: City, budget: Budget) -> str:
     rows = [
-        "| Seed | CVaR plan | CVSS-first | BFS-only | Mean-loss | vs CVSS | vs BFS | vs mean "
+        "| Seed | CVaR plan | CVSS-first | BFS-only | Mean-loss | Lower than CVSS | Lower than BFS "
+        "| Lower than mean "
         "| Beats both baselines |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---|",
     ]
