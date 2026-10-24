@@ -2,7 +2,8 @@
 
 The orchestrator calls ``authorize`` before every tool call; an agent asking for a
 tool outside its list gets a REJECT event, never the tool. Only the human approval
-path can apply a plan, so no agent holds a write tool on city state.
+path can apply a plan, so no agent holds a write tool on city state. ``SYSTEM`` is the
+orchestrator's own code (no LLM): it may only re-simulate what has been applied.
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ ALLOWLIST: MappingProxyType[AgentName, frozenset[str]] = MappingProxyType(
         AgentName.ANALYST: frozenset({"bfs_reach", "blast_radius", "simulate", "query_devices"}),
         AgentName.PLANNER: frozenset({"parse_constraint", "optimize", "compare", "plan_diff"}),
         AgentName.REDTEAM: frozenset({"simulate_strategy", "bfs_reach", "list_controls"}),
+        AgentName.SYSTEM: frozenset({"evaluate_applied"}),
     }
 )
 

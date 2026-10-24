@@ -64,6 +64,25 @@ docs/          architecture, assumptions, evaluation, demo script, team manuals
 cd backend && uv run pytest        # property tests: feasibility, CVaR maths, hash-chain tamper detection, …
 ```
 
+## Running it honestly
+
+- `GET /api/health` reports `data` (`placeholder` until the city and optimiser modules are in, then `live`),
+  `llm_mode` (`mock` agents are rule-based stand-ins and are labelled as such), `audit_key`
+  (`ephemeral` when `AUDIT_SIGNING_KEY` is unset) and `audit` (incidents are refused while the audit log is unavailable).
+- Approvals need the header `X-Role: approver`. This is **demo RBAC**, not authentication.
+- Every agent event is appended to the signed hash chain before it is streamed. `GET /api/audit/verify` re-checks every
+  hash and signature; `GET /api/audit/key` publishes the Ed25519 verify key.
+
+### Limitations
+
+- **Tail truncation** (deleting the newest log rows) is detected only against a head this server has already
+  published (`/api/audit/verify`, and the head carried by every apply event). Production would anchor heads in an
+  external transparency log or notary.
+- The quarantine is structural: raw advisory text reaches one tool-less extraction call and nothing else, and
+  extracted fields are cross-checked against the pinned feed. A lie the feed cannot contradict (for example a
+  version range the feed does not state) still needs the human approval step.
+- The approval role header and the run registry are in-memory demo mechanisms; a restart forgets running incidents.
+
 ## Scope and ethics
 
 Everything runs against a **simulated** city. UrbanShield does not scan, probe or exploit real systems; attacks are probabilities on a graph and there is no exploit code. Vendor names are fictional; CVE, KEV and EPSS records are real public data used to seed vulnerability profiles. A person approves any plan before it is marked as applied.

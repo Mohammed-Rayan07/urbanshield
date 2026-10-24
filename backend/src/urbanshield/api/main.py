@@ -3,15 +3,26 @@
 Every route is keyed by ``city_id`` so the service stays stateless and multi-city.
 ``create_app`` serves the demo fixtures (``data: "placeholder"``) until the engine's modules
 are implemented, then the live pipeline (``data: "live"``); the route shapes do not change.
+
+Runs execute in a worker thread (the pipeline is CPU-bound); their events are streamed over
+SSE and every one is appended to the hash-chained, signed audit log before it is shown.
+Approvals need the ``X-Role: approver`` header: demo RBAC, not real authentication.
 """
 
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
-from collections.abc import AsyncIterator
+import sqlite3
+import threading
+import time
+import uuid
+from collections.abc import AsyncIterator, Callable
+from contextlib import closing
+from typing import Annotated, Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -19,14 +30,19 @@ from pydantic import BaseModel, Field
 from urbanshield import __version__
 from urbanshield.agents.engine import Engine, default_engine, engine_ready
 from urbanshield.agents.llm import LLM, ReplayMiss, get_llm
+from urbanshield.agents.orchestrator import run_incident
+from urbanshield.agents.tools import RunContext, plan_brief
 from urbanshield.api import fixtures
+from urbanshield.api.runs import RunRegistry, RunState
 from urbanshield.config import Settings, get_settings
 from urbanshield.guard import quarantine
+from urbanshield.guard.audit_log import AuditLog
 from urbanshield.schemas import (
     Advisory,
     AgentEvent,
     AgentName,
     AuditEntry,
+    Budget,
     City,
     EventKind,
     Plan,
@@ -35,6 +51,9 @@ from urbanshield.schemas import (
 )
 
 log = logging.getLogger("urbanshield.api")
+
+APPROVER = "approver"
+PLANS_TOOL_ID = "tc-plans"
 
 
 class IncidentRequest(BaseModel):
@@ -47,7 +66,7 @@ class IncidentStarted(BaseModel):
 
 
 class ApprovalRequest(BaseModel):
-    plan_id: str
+    plan_id: str = Field(min_length=1, max_length=128)
     approve: bool = True
 
 
@@ -73,6 +92,52 @@ class AdvisoryPreset(BaseModel):
     text: str
 
 
+class TamperRequest(BaseModel):
+    seq: int = Field(ge=0)
+
+
+class AuditHead:
+    """The highest audit head this process has published. A later head that is lower, or
+    has a different hash at the published seq, means rows were cut from the end of the log:
+    the one edit a hash chain alone cannot see."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self.seq: int | None = None
+        self.hash: str | None = None
+
+    def publish(self, seq: int, digest: str) -> None:
+        with self._lock:
+            if self.seq is None or seq > self.seq:
+                self.seq, self.hash = seq, digest
+
+    def check(self, entries: list[AuditEntry]) -> str | None:
+        """Why ``entries`` contradict the published head, or None."""
+        with self._lock:
+            seq, digest = self.seq, self.hash
+        if seq is None:
+            return None
+        if len(entries) <= seq or entries[seq].hash != digest:
+            return "log shorter than previously published head"
+        return None
+
+
+def _open_audit(settings: Settings) -> tuple[AuditLog | None, str]:
+    """The audit log, or None and the reason it is unavailable (shown in /api/health)."""
+    if not settings.signing_key_hex:
+        log.warning(
+            "AUDIT_SIGNING_KEY is not set: using an ephemeral key; signatures will not verify after a restart"
+        )
+    try:
+        settings.db_path.parent.mkdir(parents=True, exist_ok=True)
+        return AuditLog(settings.db_path, signing_key_hex=settings.signing_key_hex), "ok"
+    except ValueError:
+        return None, "unavailable: AUDIT_SIGNING_KEY must be 64 hex characters"
+    except (sqlite3.Error, OSError) as exc:
+        log.exception("audit log unavailable")
+        return None, f"unavailable: {type(exc).__name__}"
+
+
 def create_app(
     engine: Engine | None = None,
     settings: Settings | None = None,
@@ -85,12 +150,21 @@ def create_app(
     engine = engine or default_engine()
     llm = llm or get_llm(settings)
     is_live = engine_ready(engine) if live is None else live
+    audit, audit_status = _open_audit(settings)
+    head = AuditHead()
+    runs = RunRegistry()
+    budget = Budget(inr=settings.budget_inr, downtime_h=settings.downtime_h)
+    city_cache: dict[str, City] = {}
+    plans_cache: dict[str, Any] = {}
+    plans_lock = threading.Lock()
 
     app = FastAPI(
         title="UrbanShield API",
         version=__version__,
         description="Tail-risk-aware cyber resilience planning for connected city infrastructure.",
     )
+    app.state.runs = runs
+    app.state.audit = audit
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.cors_origins),
@@ -98,11 +172,90 @@ def create_app(
         allow_headers=["Content-Type", "X-Role"],
     )
 
+    # ------------------------------------------------------------------ helpers
+
+    def the_city() -> City:
+        if not is_live:
+            return fixtures.demo_city()
+        if "city" not in city_cache:
+            city_cache["city"] = engine.generate_city(seed=settings.city_seed)
+        return city_cache["city"]
+
     def city_or_404(city_id: str) -> City:
-        city = fixtures.demo_city()
+        city = the_city()
         if city.id != city_id:
             raise HTTPException(status_code=404, detail=f"unknown city {city_id!r}")
         return city
+
+    def live_plans() -> tuple[list[Plan], ToolResult]:
+        """``compare`` under the demo budget, computed once and recorded for provenance."""
+        with plans_lock:
+            if "plans" not in plans_cache:
+                city = the_city()
+                plans = engine.compare(city, budget, [], n_scenarios=settings.n_scenarios)
+                cvar_plan = next(p for p in plans if p.objective.value == "cvar")
+                cvss_plan = next(p for p in plans if p.objective.value == "cvss")
+                record = ToolResult(
+                    id=PLANS_TOOL_ID,
+                    tool="compare",
+                    agent=AgentName.PLANNER,
+                    args={"budget_inr": budget.inr, "downtime_h": budget.downtime_h},
+                    result={
+                        "a": cvss_plan.id,
+                        "b": cvar_plan.id,
+                        "plans": {p.id: plan_brief(p) for p in plans},
+                    },
+                )
+                plans_cache["plans"] = [p.model_copy(update={"tool_call_id": record.id}) for p in plans]
+                plans_cache["record"] = record
+            return plans_cache["plans"], plans_cache["record"]
+
+    def require_audit() -> AuditLog:
+        if audit is None:
+            raise HTTPException(status_code=503, detail=f"audit log {audit_status}")
+        return audit
+
+    def emitter(state: RunState) -> Callable[[AgentEvent], None]:
+        """Audit first, then show. An event that cannot be audited stops the run (fail closed)."""
+        failed = threading.Event()
+
+        def emit(event: AgentEvent) -> None:
+            if failed.is_set():
+                state.push(event)
+                return
+            if event.kind == EventKind.APPLY and audit is not None:
+                current = audit.entries()
+                if current:
+                    head.publish(current[-1].seq, current[-1].hash)
+                    tip = {"seq": current[-1].seq, "hash": current[-1].hash}
+                    event = event.model_copy(update={"payload": event.payload | {"audit_head": tip}})
+            try:
+                require_audit().append(event)
+            except (HTTPException, sqlite3.Error, OSError) as exc:
+                failed.set()
+                log.exception("audit append failed for run %s", state.run_id)
+                state.push(event)
+                raise RuntimeError("audit log unavailable; the run was stopped") from exc
+            state.push(event)
+
+        return emit
+
+    def run_in_background(state: RunState, body: IncidentRequest) -> None:
+        def work() -> None:
+            try:
+                run_incident(
+                    state.ctx,
+                    body.advisory_text,
+                    body.constraints_text,
+                    state.gate,
+                    timeout_s=settings.approval_timeout_s,
+                )
+            finally:
+                state.finish()
+
+        threading.Thread(target=work, name=f"run-{state.run_id}", daemon=True).start()
+
+    # ------------------------------------------------------------------ routes
 
     @app.get("/api/health")
     def health() -> dict[str, str | bool]:
@@ -114,6 +267,8 @@ def create_app(
             "llm_mode": settings.llm_mode,
             "data": "live" if is_live else "placeholder",
             "engine_ready": is_live,
+            "audit_key": "fixed" if settings.signing_key_hex else "ephemeral",
+            "audit": audit_status,
         }
 
     @app.get("/api/cities/{city_id}", response_model=City)
@@ -123,39 +278,103 @@ def create_app(
     @app.get("/api/cities/{city_id}/plans", response_model=list[Plan])
     def get_plans(city_id: str) -> list[Plan]:
         city_or_404(city_id)
-        return list(fixtures.demo_plans())
+        return live_plans()[0] if is_live else list(fixtures.demo_plans())
 
     @app.post("/api/cities/{city_id}/incidents", response_model=IncidentStarted, status_code=202)
     def start_incident(city_id: str, body: IncidentRequest) -> IncidentStarted:
-        city_or_404(city_id)
-        return IncidentStarted(run_id="run-placeholder")
+        city = city_or_404(city_id)
+        if not is_live:
+            return IncidentStarted(run_id="run-placeholder")
+        require_audit()
+        state = RunState(run_id=f"run-{uuid.uuid4().hex[:12]}", city_id=city.id)
+        state.ctx = RunContext(
+            run_id=state.run_id,
+            city=city,
+            engine=engine,
+            llm=llm,
+            emit=emitter(state),
+            budget=budget,
+            n_scenarios=settings.n_scenarios,
+        )
+        if not runs.add(state):
+            raise HTTPException(status_code=429, detail="too many incidents running; try again shortly")
+        run_in_background(state, body)
+        return IncidentStarted(run_id=state.run_id)
 
     @app.get("/api/runs/{run_id}/events")
     async def stream_events(run_id: str) -> StreamingResponse:
-        """Server-Sent Events: one ``AgentEvent`` JSON per ``data:`` line, then ``event: done``."""
+        """Server-Sent Events: one ``AgentEvent`` JSON per ``data:`` line, then ``event: done``.
+        Reconnecting replays the run from its first event."""
+        if not is_live:
 
-        async def gen() -> AsyncIterator[str]:
-            for event in fixtures.demo_events():
-                yield f"data: {event.model_dump_json()}\n\n"
-                await asyncio.sleep(0.6)
+            async def placeholder() -> AsyncIterator[str]:
+                for event in fixtures.demo_events():
+                    yield f"data: {event.model_dump_json()}\n\n"
+                    await asyncio.sleep(0.6)
+                yield "event: done\ndata: {}\n\n"
+
+            return StreamingResponse(placeholder(), media_type="text/event-stream")
+        state = runs.get(run_id)
+        if state is None:
+            raise HTTPException(status_code=404, detail=f"unknown run {run_id!r}")
+
+        async def follow() -> AsyncIterator[str]:
+            async for event in state.follow():
+                yield ": keep-alive\n\n" if event is None else f"data: {event.model_dump_json()}\n\n"
             yield "event: done\ndata: {}\n\n"
 
-        return StreamingResponse(gen(), media_type="text/event-stream")
+        return StreamingResponse(
+            follow(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"}
+        )
 
     @app.post("/api/runs/{run_id}/approvals", response_model=AgentEvent)
-    def approve(run_id: str, body: ApprovalRequest) -> AgentEvent:
-        return AgentEvent(
-            id=f"ev-approval-{body.plan_id}",
-            city_id=fixtures.demo_city().id,
-            run_id=run_id,
-            agent=AgentName.HUMAN,
-            kind=EventKind.APPROVAL if body.approve else EventKind.REJECT,
-            summary=f"{'Approved' if body.approve else 'Rejected'} {body.plan_id}",
-        )
+    async def approve(
+        run_id: str, body: ApprovalRequest, x_role: Annotated[str | None, Header()] = None
+    ) -> AgentEvent:
+        """Answer the run's pending approval. Needs ``X-Role: approver`` (demo RBAC)."""
+        if x_role != APPROVER:
+            raise HTTPException(status_code=403, detail="approvals need the approver role (X-Role: approver)")
+        if not is_live:
+            return AgentEvent(
+                id=f"ev-approval-{body.plan_id}",
+                city_id=fixtures.demo_city().id,
+                run_id=run_id,
+                agent=AgentName.HUMAN,
+                kind=EventKind.APPROVAL if body.approve else EventKind.REJECT,
+                summary=f"{'Approved' if body.approve else 'Rejected'} {body.plan_id}",
+                payload={"role": APPROVER},
+            )
+        state = runs.get(run_id)
+        if state is None:
+            raise HTTPException(status_code=404, detail=f"unknown run {run_id!r}")
+        seen = len(state.events)
+        if not state.gate.submit(body.plan_id, body.approve, APPROVER):
+            raise HTTPException(status_code=409, detail=f"no pending approval for {body.plan_id!r}")
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:  # the worker records the decision as an event
+            event = next((e for e in state.events[seen:] if e.agent == AgentName.HUMAN), None)
+            if event is not None:
+                return event
+            await asyncio.sleep(0.02)
+        raise HTTPException(status_code=504, detail="decision recorded, but the run did not acknowledge it")
+
+    @app.get("/api/runs/{run_id}/tool-results/{tool_call_id}", response_model=ToolResult)
+    def get_run_tool_result(run_id: str, tool_call_id: str) -> ToolResult:
+        """Provenance for a number in a run's timeline (tool ids restart in every run)."""
+        state = runs.get(run_id) if is_live else None
+        record = state.ctx.results.get(tool_call_id) if state and state.ctx else None
+        if record is None:
+            raise HTTPException(status_code=404, detail=f"unknown tool call {tool_call_id!r} in {run_id!r}")
+        return record
 
     @app.get("/api/tool-results/{tool_call_id}", response_model=ToolResult)
     def get_tool_result(tool_call_id: str) -> ToolResult:
-        """Provenance: the inputs and output behind any number on screen."""
+        """Provenance for the precomputed ``/plans`` comparison."""
+        if is_live:
+            _, record = live_plans()
+            if tool_call_id != record.id:
+                raise HTTPException(status_code=404, detail=f"unknown tool call {tool_call_id!r}")
+            return record
         event = next((e for e in fixtures.demo_events() if e.tool_call_id == tool_call_id), None)
         plan = next((p for p in fixtures.demo_plans() if p.tool_call_id == tool_call_id), None)
         if event is None and plan is None:
@@ -172,10 +391,8 @@ def create_app(
     @app.get("/api/advisories", response_model=list[AdvisoryPreset])
     def advisory_presets() -> list[AdvisoryPreset]:
         """Curated Judge Mode advisories: normal, poisoned and valid-but-wrong."""
-        return [
-            AdvisoryPreset(**{k: p[k] for k in ("id", "kind", "title", "text")})
-            for p in quarantine.load_presets()
-        ]
+        fields = ("id", "kind", "title", "text")
+        return [AdvisoryPreset(**{k: p[k] for k in fields}) for p in quarantine.load_presets()]
 
     @app.post("/api/quarantine/preview", response_model=QuarantinePreview)
     def quarantine_preview(body: QuarantinePreviewRequest) -> QuarantinePreview:
@@ -206,11 +423,45 @@ def create_app(
 
     @app.get("/api/audit/entries", response_model=list[AuditEntry])
     def audit_entries() -> list[AuditEntry]:
-        return []
+        return require_audit().entries()
+
+    @app.get("/api/audit/key")
+    def audit_key() -> dict[str, str]:
+        """Public Ed25519 key: anyone can check the signatures with it."""
+        return {"verify_key_hex": require_audit().verify_key_hex}
 
     @app.get("/api/audit/verify", response_model=VerifyResult)
     def verify_audit() -> VerifyResult:
-        return VerifyResult(ok=True, entries=len(fixtures.demo_events()))
+        """Re-check every hash and signature, and that the log still reaches the highest head
+        this server has published (tail truncation)."""
+        log_ = require_audit()
+        result = log_.verify()
+        entries = log_.entries()
+        tip = entries[-1] if entries else None
+        current = {"head_seq": tip.seq if tip else None, "head_hash": tip.hash if tip else None}
+        if result.ok and (reason := head.check(entries)) is not None:
+            return VerifyResult(ok=False, entries=len(entries), reason=reason, truncated=True, **current)
+        if result.ok and tip is not None:
+            head.publish(tip.seq, tip.hash)
+        return result.model_copy(update=current)
+
+    if settings.allow_demo_tamper:
+
+        @app.post("/api/audit/tamper")
+        def tamper(body: TamperRequest) -> dict[str, int]:
+            """Judge Mode only (ALLOW_DEMO_TAMPER=1): edit one stored event so Verify chain breaks there."""
+            require_audit()
+            with closing(sqlite3.connect(settings.db_path)) as conn, conn:
+                row = conn.execute("SELECT event_json FROM audit_log WHERE seq = ?", (body.seq,)).fetchone()
+                if row is None:
+                    raise HTTPException(status_code=404, detail=f"no audit entry {body.seq}")
+                event = json.loads(row[0])
+                event["summary"] = f"{event.get('summary', '')} [edited]"[:280]
+                conn.execute(
+                    "UPDATE audit_log SET event_json = ? WHERE seq = ?",
+                    (json.dumps(event, sort_keys=True, separators=(",", ":")), body.seq),
+                )
+            return {"tampered_seq": body.seq}
 
     return app
 

@@ -37,8 +37,10 @@ from urbanshield.schemas import (
     ControlKind,
     EventKind,
     LLMUsage,
+    Objective,
     Plan,
     ScenarioLosses,
+    Solver,
     ToolResult,
 )
 
@@ -164,10 +166,6 @@ class DeviceArg(Args):
     device_id: str
 
 
-class SimulateArgs(Args):
-    n_scenarios: int = Field(default=1000, ge=100, le=5000)
-
-
 class QueryArgs(Args):
     category: str = Field(default="", description="signal | meter | streetlight | ev_charger, or empty")
     zone: str = Field(default="")
@@ -228,7 +226,7 @@ def _device_brief(device: Any) -> dict[str, Any]:
     }
 
 
-def _plan_brief(plan: Plan) -> dict[str, Any]:
+def plan_brief(plan: Plan) -> dict[str, Any]:
     out: dict[str, Any] = {
         "objective": plan.objective.value,
         "cost_inr": plan.cost_inr,
@@ -289,9 +287,11 @@ def _t_blast_radius(ctx: RunContext, a: DeviceArg) -> dict[str, Any]:
     return {"device_id": a.device_id, "lost": lost, "critical_lost": critical}
 
 
-def _t_simulate(ctx: RunContext, a: SimulateArgs) -> dict[str, Any]:
+def _t_simulate(ctx: RunContext, a: NoArgs) -> dict[str, Any]:
+    # The run's scenario count and the test seed, so this CVaR is the same number the
+    # evaluator reports for the same controls (no knob for the model to turn).
     losses = ctx.engine.controlled(
-        ctx.city, ctx.applied, n_scenarios=a.n_scenarios, seed=ctx.engine.test_seed
+        ctx.city, ctx.applied, n_scenarios=ctx.n_scenarios, seed=ctx.engine.test_seed
     )
     return {"controls_applied": len(ctx.applied)} | _summary(ctx, losses)
 
@@ -316,7 +316,7 @@ def _t_compare(ctx: RunContext, a: BudgetArgs) -> dict[str, Any]:
     cvar_plan = next(p for p in plans if p.objective.value == "cvar")
     cvss_plan = next(p for p in plans if p.objective.value == "cvss")
     # Shape documented in guard/auditor.py: claims compare plan "a" (baseline) with "b" (ours).
-    return {"a": cvss_plan.id, "b": cvar_plan.id, "plans": {p.id: _plan_brief(p) for p in plans}}
+    return {"a": cvss_plan.id, "b": cvar_plan.id, "plans": {p.id: plan_brief(p) for p in plans}}
 
 
 def _t_optimize(ctx: RunContext, a: BudgetArgs) -> dict[str, Any]:
@@ -324,7 +324,7 @@ def _t_optimize(ctx: RunContext, a: BudgetArgs) -> dict[str, Any]:
     plan = ctx.engine.solve_cvar(ctx.city, ctx.train_losses, budget, list(ctx.constraints))
     plan = plan.model_copy(update={"metrics": ctx.engine.evaluate_plan(ctx.city, plan, ctx.budget.alpha)})
     ctx.plans[plan.id] = plan
-    return {"plan_id": plan.id, "plans": {plan.id: _plan_brief(plan)}}
+    return {"plan_id": plan.id, "plans": {plan.id: plan_brief(plan)}}
 
 
 def _t_plan_diff(ctx: RunContext, a: PlanDiffArgs) -> dict[str, Any]:
@@ -347,6 +347,31 @@ def _t_list_controls(ctx: RunContext, a: NoArgs) -> dict[str, Any]:
         "plan_id": plan.id,
         "choices": {d: k.value for d, k in sorted(plan.choices.items())},
         "unprotected_exposed": unprotected_exposed,
+    }
+
+
+def _t_evaluate_applied(ctx: RunContext, a: NoArgs) -> dict[str, Any]:
+    """Re-simulate the twin with exactly the controls applied so far (B's held-out evaluator)."""
+    options = {(d.id, o.kind): o for d in ctx.city.devices for o in d.controls}
+    choices = dict(sorted(ctx.applied.items()))
+    plan = Plan(
+        id=f"applied-{len(choices)}",
+        city_id=ctx.city.id,
+        objective=Objective.CVAR,
+        choices=choices,
+        cost_inr=sum(options[(d, k)].cost_inr for d, k in choices.items()),
+        downtime_h=sum(options[(d, k)].downtime_h for d, k in choices.items()),
+        solver=Solver.RANKING,
+        solve_ms=0,
+    )
+    m = ctx.engine.evaluate_plan(ctx.city, plan, ctx.budget.alpha, n_scenarios=ctx.n_scenarios)
+    return {
+        "controls_applied": len(choices),
+        "cvar": round(m.cvar, 4),
+        "mean_loss": round(m.mean_loss, 4),
+        "max_cascade": m.max_cascade,
+        "ci_low": round(m.ci_low, 4),
+        "ci_high": round(m.ci_high, 4),
     }
 
 
@@ -404,7 +429,7 @@ TOOLS: dict[str, Tool] = {
         Tool(
             "simulate",
             "Monte Carlo attack simulation with the controls applied so far.",
-            SimulateArgs,
+            NoArgs,
             _t_simulate,
         ),
         Tool(
@@ -439,6 +464,12 @@ TOOLS: dict[str, Tool] = {
             "Attack the plan under review with one strategy; reports the CVaR increase.",
             StrategyArgs,
             _t_simulate_strategy,
+        ),
+        Tool(
+            "evaluate_applied",
+            "Re-simulate the twin with the controls applied so far (held-out scenarios).",
+            NoArgs,
+            _t_evaluate_applied,
         ),
     )
 }
@@ -511,6 +542,17 @@ def _describe(tool: str, args: Args, result: dict[str, Any]) -> str:
             return (
                 f"simulate_strategy({result['strategy_id']}) → CVaR {result['increase_pct']:+.1%} ({verdict})"
             )
+        case "evaluate_applied":
+            return (
+                f"evaluate_applied → CVaR95 {result['cvar']:.2f} with {result['controls_applied']} controls"
+            )
+        case "quarantine_extract":
+            return (
+                f"quarantine_extract → typed advisory {result['advisory']['cve_id']} (no free text passed on)"
+            )
+        case "list_controls":
+            n = len(result.get("unprotected_exposed", []))
+            return f"list_controls({result['plan_id']}) → {n} exposed devices without a control"
         case "cross_check":
             n = len(result["discrepancies"])
             return "cross_check vs pinned feed → consistent" if n == 0 else f"cross_check → {n} discrepancies"

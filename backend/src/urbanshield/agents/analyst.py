@@ -97,7 +97,7 @@ def assess(ctx: RunContext, matches: list[Match]) -> Assessment:
     cited = _citations(ctx, final)
     results = [ctx.results[i] for i in cited]
     if not any(r.tool == "simulate" for r in results):
-        results.append(tools.call(ctx, AgentName.ANALYST, "simulate", {"n_scenarios": ctx.n_scenarios}))
+        results.append(tools.call(ctx, AgentName.ANALYST, "simulate", {}))
     covered = {r.result["device_id"] for r in results if r.tool == "blast_radius"}
     results += [
         tools.call(ctx, AgentName.ANALYST, "blast_radius", {"device_id": d})

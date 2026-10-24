@@ -271,11 +271,16 @@ def replan(ctx: RunContext, strategies: list[Strategy]) -> bool:
     new = ctx.plans[record.result["plan_id"]]
     ctx.candidate = new
     changed = len({d for d, _ in set(new.choices.items()) ^ set(old.choices.items() if old else ())})
+    added = sum(e.n_scenarios for e in extra)
+    outcome = (
+        f"{old.id if old else '—'} → {new.id} ({changed} device{'' if changed == 1 else 's'} changed)"
+        if changed
+        else f"the optimiser kept {new.id}"
+    )
     ctx.event(
         AgentName.PLANNER,
         EventKind.DECISION,
-        f"Replanned on {sum(e.n_scenarios for e in extra)} added attack scenarios: "
-        f"{old.id if old else '—'} → {new.id} ({changed} device{'' if changed == 1 else 's'} changed)",
+        f"Replanned on {added} added attack scenarios: {outcome}",
         {"plan": new.model_dump(mode="json"), "strategies": [s.id for s in strategies]},
         tool_call_id=record.id,
     )
