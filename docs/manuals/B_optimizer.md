@@ -1,6 +1,6 @@
 # Manual B — Optimiser, baselines, evaluation, benchmark
 
-**Branch:** `b/optimizer` · **Tests:** `tests/test_opt.py`
+**Owner:** Sai Varun (`Sai-Varun-Tej`) · **Branch:** `b/optimizer` · **Tests:** `tests/test_opt.py`
 
 ## Why this part matters
 
@@ -18,7 +18,7 @@ backend/scripts/run_evals.py        (new)
 docs/EVALS.md
 ```
 
-**Never touch:** `schemas.py`, `city/`, `sim/`, `agents/`, `api/`, `frontend/`, other people's tests.
+**Never touch:** `schemas.py`, `city/`, `sim/`, `guard/`, `agents/`, `api/`, `frontend/`, other people's tests.
 
 ## Contracts you use
 
@@ -26,7 +26,8 @@ docs/EVALS.md
 `Objective`, `Plan`, `PlanMetrics`, `Solver`, `ControlKind`.
 
 **You don't need A's simulator to start.** `tests/test_opt.py` builds a synthetic `ScenarioLosses`
-fixture. Only `evaluate.py` / `compare` need `simulate()` (A delivers it ≈ h6).
+fixture. Only `evaluate.py` / `compare` need `simulate()` (Anubhav delivers it ≈ h6) and `generate_city`
+(Prabhav, ≈ h4).
 
 ---
 
@@ -41,7 +42,7 @@ for that device's option of that kind), `is_feasible` (every rule in the module 
 `opt/baselines.py:rank_and_buy` for CVSS, CVSS_KEV_EPSS, LOSS_PER_INR, BFS_CENTRALITY. Walk the ranking,
 buy the device's patch (or cheapest feasible option if patch is infeasible under constraints) while
 budget and downtime allow; skip devices that don't fit and continue. `solver=Solver.RANKING`.
-BFS_CENTRALITY uses `city.graphs.reach_centrality` (A's) — until A merges, rank by out-degree of REACH edges
+BFS_CENTRALITY uses `city.graphs.reach_centrality` (Prabhav's) — until it merges, rank by out-degree of REACH edges
 in a private helper and switch later.
 **Done when:** the four baseline cases of `test_every_planner_is_feasible` pass.
 
@@ -63,7 +64,7 @@ improves. **Done when:** the greedy feasibility case passes.
 - Plan id: `plan-<objective>-<8-hex of sorted choices>`; record `solve_ms`.
 **Done when:** all of `test_opt.py` except `test_compare_runs_everything` passes.
 
-### B5 · Held-out evaluation (target: h11, needs A4)
+### B5 · Held-out evaluation (target: h11, needs S1 + A2)
 `opt/evaluate.py`:
 - `evaluate_plan`: `simulate(city, n, seed=TEST_SEED, controls=plan.choices)`; CVaR, mean, max cascade
   (max over scenarios of compromised + cascaded device count), bootstrap CI (resample scenarios with

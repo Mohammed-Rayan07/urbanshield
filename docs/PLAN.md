@@ -190,10 +190,11 @@ Chronoforge/
 
 | Person | Track | Must-have by |
 |---|---|---|
-| **A** | City generator on the Mangaluru map, graphs, CVE/KEV/EPSS seeding, vectorised simulator + campaigns | fixtures **h2**, `simulate()` **h6** |
-| **B** | CVaR MILP, 5 baselines (incl. BFS), 2 ablations, held-out eval + CIs, greedy fallback, `bench.py` | CVaR beats CVSS-first **h10** |
+| **A** (Prabhav) | City generator on the Mangaluru map, graphs, CVE/KEV/EPSS feed, ASSUMPTIONS | generator **h4** |
+| **S** (Anubhav) | Vectorised simulator + campaigns, audit log, Auditor | `simulate()` **h6** |
+| **B** (Sai Varun) | CVaR MILP, 5 baselines (incl. BFS), 2 ablations, held-out eval + CIs, greedy fallback, `bench.py` | CVaR beats CVSS-first **h10** |
 | **C (Rayan, integrator)** | Orchestrator, 4 agents, quarantine, allowlists, autonomy policy, LLM adapter, API, contracts, reviews | thin loop on mocks **h8**, real tools **h14** |
-| **D** | 3 screens, SSE, provenance drawer, Judge Mode, README/ARCHITECTURE, slides, video | static on fixtures **h8**, live **h16** |
+| **D** (Rayan) | 3 screens, SSE, provenance drawer, Judge Mode, README/ARCHITECTURE, slides, video | static on fixtures **h8**, live **h16** |
 
 A commits `fixtures/city.json` and `fixtures/losses.npy` by **h2** (fake values are fine) so B, C and D never block on A.
 

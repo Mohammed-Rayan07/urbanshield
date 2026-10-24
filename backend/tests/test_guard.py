@@ -1,4 +1,4 @@
-"""Audit log and Auditor (owner: A), allowlist and quarantine (owner: C)."""
+"""Audit log and Auditor (owner: S), allowlist and quarantine (owner: C)."""
 
 from __future__ import annotations
 

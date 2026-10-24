@@ -1,6 +1,6 @@
 # Manual D — Dashboard and demo video
 
-**Branch:** `d/frontend` · **Checks:** `npm run lint` and `npm run build` clean; the screens work against the running API.
+**Owner:** Rayan · **Branch:** `d/frontend` · **Checks:** `npm run lint` and `npm run build` clean; the screens work against the running API.
 
 ## Why this part matters
 
@@ -20,7 +20,7 @@ docs/DEMO_SCRIPT.md, docs/screenshots/
 ```
 
 **Never touch:** `frontend/src/types.ts` (contract), `frontend/src/api.ts` (ask Rayan for new calls),
-anything in `backend/`.
+anything in `backend/` except through the C manual.
 
 ## Run it
 
@@ -98,7 +98,7 @@ Empty/error states, focus rings, tab order, titles; check every screen at 1280×
 **Screenshots only now**, after Rayan regenerates the fixtures from the real pipeline (the banner must be gone):
 save `docs/screenshots/{city,plans,agents}.png`. Never publish placeholder numbers.
 
-### D7 · Demo video (h20–h22, with Rayan)
+### D7 · Demo video (h20–h22)
 Follow `docs/DEMO_SCRIPT.md`. Record at 1280×720 with OBS, backend in `LLM_MODE=replay` so every run is
 identical. Keep it under 3 minutes. Export MP4, upload (YouTube unlisted / Drive), put the link at the top of README.
 

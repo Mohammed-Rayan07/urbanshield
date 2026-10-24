@@ -1,4 +1,4 @@
-"""Monte Carlo simulator. Owner: A."""
+"""Monte Carlo simulator. Owner: S."""
 
 from __future__ import annotations
 

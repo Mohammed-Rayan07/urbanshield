@@ -1,1 +1,1 @@
-"""Vectorised Monte Carlo attack simulation with correlated campaigns. Owner: A."""
+"""Vectorised Monte Carlo attack simulation with correlated campaigns. Owner: S."""

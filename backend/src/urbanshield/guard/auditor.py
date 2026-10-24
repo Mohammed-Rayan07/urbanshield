@@ -1,4 +1,4 @@
-"""The Auditor: deterministic code that checks every number an agent states. Owner: A (after h6).
+"""The Auditor: deterministic code that checks every number an agent states. Owner: S.
 
 An agent never writes a number in prose. It emits ``Claim`` objects; each must cite a
 ``tool_call_id`` whose stored result contains ``metric`` for both plans, and the

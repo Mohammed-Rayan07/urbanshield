@@ -4,9 +4,9 @@
 
 | Window | Expect | Gate |
 |---|---|---|
-| **h6** | A: graphs + generator + simulate · B: common + baselines + greedy · D: shell + components | `test_city`, `test_sim` green |
-| **h10** | B: MILP + ablations · D: map + plans screen · C: adapter, tools, Sentinel | **CP1:** run `compare` on the demo city — CVaR beats CVSS-first and BFS-only on test set? If not, tune A's demo structure *now* |
-| **h14** | A: audit log + Auditor · B: evaluation · D: agents screen · C: Analyst, Planner, Red-Team | end-to-end run in `mock` mode |
+| **h6** | A: graphs + generator · S: simulate · B: common + baselines + greedy · you: adapter + D shell | `test_city`, `test_sim` green |
+| **h10** | B: MILP + ablations · A: feed · S: audit log · you: tools, Sentinel, map + plans screen | **CP1:** run `compare` on the demo city — CVaR beats CVSS-first and BFS-only on test set? If not, tune A's demo structure *now* |
+| **h14** | S: Auditor · B: evaluation · you: Analyst, Planner, Red-Team, agents screen | end-to-end run in `mock` mode |
 | **h16** | everything wired; **CP2:** Flow A live once → record replay traces → rough video cut | feature freeze at h19 |
 
 ## PR review (5 minutes each)
@@ -27,4 +27,5 @@ everyone `git pull origin main`.
 - `ecc:security-reviewer` agent + `/code-review` on the full diff; fix findings.
 - `webapp-testing` e2e of Flow A and Judge Mode.
 - README: video link, screenshots, EVALS headline numbers. `docker compose up --build` works from a clean clone.
+- **Before making the repo public:** remove `docs/PLAN.md` (strategy + judge Q&A) from the repo *and* its history.
 - Make sure the repo is public and the final commit is before the deadline.

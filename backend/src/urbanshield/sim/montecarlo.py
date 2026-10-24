@@ -1,4 +1,4 @@
-"""Monte Carlo attack simulator. Owner: A.
+"""Monte Carlo attack simulator. Owner: S.
 
 Model (keep it this simple; it is documented in docs/ASSUMPTIONS.md):
 

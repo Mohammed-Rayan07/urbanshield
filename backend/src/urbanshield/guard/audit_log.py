@@ -1,4 +1,4 @@
-"""Tamper-evident audit log: SHA-256 hash chain + Ed25519 signatures. Owner: A (after h6).
+"""Tamper-evident audit log: SHA-256 hash chain + Ed25519 signatures. Owner: S.
 
 Entry ``n``::
 

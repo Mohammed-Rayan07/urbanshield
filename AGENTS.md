@@ -39,5 +39,5 @@ hackathon. Read these rules first, then the manual for your part in `docs/manual
 
 ## Git
 
-Work on your branch (`a/city-sim`, `b/optimizer`, `d/frontend`, `c/agents`). Commit small and often with
+Work on your branch (`a/city`, `b/optimizer`, `s/sim-audit`, `c/agents`, `d/frontend`). Commit small and often with
 clear messages (`sim: vectorise campaign scenarios`). Push your branch and open a PR to `main`. CI must be green.

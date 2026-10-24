@@ -5,10 +5,11 @@ to build; the tests tell it when it's done. You review, run, commit and push.
 
 | Part | Manual | Branch | Owner |
 |---|---|---|---|
-| A — City twin + simulator (+ audit log after h6) | [A_city_sim.md](A_city_sim.md) | `a/city-sim` | _name_ |
-| B — Optimiser + baselines + evaluation | [B_optimizer.md](B_optimizer.md) | `b/optimizer` | _name_ |
-| C — Agents + guardrails + API (integrator) | [C_agents.md](C_agents.md) | `c/agents` | Rayan |
-| D — Dashboard + demo video | [D_frontend.md](D_frontend.md) | `d/frontend` | _name_ |
+| A — City twin, graphs, vulnerability feed | [A_city.md](A_city.md) | `a/city` | Prabhav (`Prabhavravi`) |
+| B — Optimiser, baselines, evaluation, benchmark | [B_optimizer.md](B_optimizer.md) | `b/optimizer` | Sai Varun (`Sai-Varun-Tej`) |
+| S — Attack simulator, audit log, Auditor | [S_sim_audit.md](S_sim_audit.md) | `s/sim-audit` | Anubhav (`anubhav10cs`) |
+| C — Agents, guardrails, API (integrator) | [C_agents.md](C_agents.md) | `c/agents` | Rayan |
+| D — Dashboard + demo video | [D_frontend.md](D_frontend.md) | `d/frontend` | Rayan |
 
 ## 1. Install (Windows, PowerShell)
 
@@ -25,18 +26,18 @@ Close and reopen the terminal, then:
 gh auth login                                # GitHub.com → HTTPS → login with browser
 gh repo clone Mohammed-Rayan07/urbanshield
 cd urbanshield
-git switch -c a/city-sim                     # use YOUR branch name from the table
+git switch -c a/city                         # use YOUR branch name from the table
 cd backend; uv sync; uv run pytest           # should say "N passed, M skipped"
 ```
 
 ## 2. Give your coding agent its brief
 
 Open your coding agent **in the repo folder** and paste this as the first message
-(replace the manual name):
+(replace `A_city.md` with your manual):
 
 ```text
 You are building one part of a hackathon project. First read AGENTS.md, then read
-docs/manuals/A_city_sim.md completely, then backend/src/urbanshield/schemas.py.
+docs/manuals/A_city.md completely, then backend/src/urbanshield/schemas.py.
 Follow the manual's tasks in order. After each task: run the tests named in that task,
 run `uv run ruff check . --fix && uv run ruff format .` in backend/, and show me the
 test output. Do not edit files outside "You own". Do not edit schemas.py or types.ts.
