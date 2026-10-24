@@ -17,7 +17,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -73,16 +75,18 @@ class LLM(Protocol):
 
 
 def parse_json_object(text: str) -> dict[str, Any]:
-    match = re.search(r"\{.*\}", text, flags=re.DOTALL)
-    if not match:
-        raise LLMOutputError("no JSON object in model output")
-    try:
-        value = json.loads(match.group(0))
-    except json.JSONDecodeError as exc:
-        raise LLMOutputError(f"invalid JSON in model output: {exc.msg}") from exc
-    if not isinstance(value, dict):
-        raise LLMOutputError("model output is not a JSON object")
-    return value
+    """The first complete JSON object in ``text``, tolerating code fences and prose around it."""
+    decoder = json.JSONDecoder()
+    error = "no JSON object in model output"
+    for match in re.finditer(r"\{", text):
+        try:
+            value, _ = decoder.raw_decode(text, match.start())
+        except json.JSONDecodeError as exc:
+            error = f"invalid JSON in model output: {exc.msg}"
+            continue
+        if isinstance(value, dict):
+            return value
+    raise LLMOutputError(error)
 
 
 def request_key(
@@ -141,7 +145,10 @@ class CachedLLM:
             )
         record = self._call(task, model, messages, tools, json_output)
         self._cache_dir.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(record, indent=1, ensure_ascii=False), encoding="utf-8")
+        # Write then rename: a concurrent reader or a crash never sees a half-written trace.
+        tmp = path.with_suffix(f".{os.getpid()}.{threading.get_ident()}.tmp")
+        tmp.write_text(json.dumps(record, indent=1, ensure_ascii=False), encoding="utf-8")
+        os.replace(tmp, path)
         return _from_record(record, cached=False)
 
     def _call(

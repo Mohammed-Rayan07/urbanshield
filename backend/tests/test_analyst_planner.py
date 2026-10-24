@@ -57,6 +57,19 @@ def test_invented_citations_are_rejected_and_numbers_still_come_from_tools(tiny_
     assert a.cvar_before == sim.result["cvar95"] and a.recommendation == "contain"
 
 
+def test_citations_about_unaffected_devices_do_not_inflate_the_blast_radius(tiny_city) -> None:
+    script = {
+        "analyst.step": [
+            reply(calls=[("blast_radius", {"device_id": "d-004"})]),  # d-005 depends on d-004
+            reply({"recommendation": "replan", "tool_call_ids": ["tc-004"]}),
+        ]
+    }
+    ctx = make_ctx(tiny_city, llm=ScriptedLLM(script))
+    a = assess(ctx, _sentinel(ctx).matches)
+    assert ctx.results["tc-004"].result["lost"] == ["d-005"]
+    assert a.blast_radius == []  # d-001/d-002 take nothing down with them
+
+
 def test_invalid_recommendation_falls_back_to_replan(tiny_city) -> None:
     events = []
     script = {"analyst.step": [reply({"recommendation": "ignore it", "tool_call_ids": []})]}
@@ -123,6 +136,7 @@ def test_malformed_rows_are_rejected_individually(tiny_city) -> None:
         {"kind": "forbid_control", "params": {"kind": "nuke"}},
         {"kind": "budget", "params": {"inr": -5}},
         {"kind": "downtime", "params": {"hours": float("inf")}},
+        {"kind": "budget", "params": {"inr": 0.5}},
     ]
     events = []
     ctx = make_ctx(
@@ -131,7 +145,7 @@ def test_malformed_rows_are_rejected_individually(tiny_city) -> None:
         emit=events.append,
     )
     assert _rows(ctx, "anything") == [(ConstraintKind.NO_DOWNTIME_ZONE, {"zone": "Z2"})]
-    assert sum(e.kind == EventKind.REJECT for e in events) == 4
+    assert sum(e.kind == EventKind.REJECT for e in events) == 5
 
 
 # ---------------------------------------------------------------- planner: plan + claims

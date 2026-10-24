@@ -24,7 +24,8 @@ class Always:
         self.approve = approve
         self.asked: list[dict] = []
 
-    def ask(self, request: dict, timeout_s: float) -> ApprovalDecision | None:
+    def ask(self, request: dict, timeout_s: float, announce) -> ApprovalDecision | None:
+        announce()
         self.asked.append(request)
         if self.approve is None:
             return None
@@ -121,6 +122,15 @@ def test_contain_makes_affected_devices_must_fix(tiny_city) -> None:
     assert {"d-001", "d-002"} <= set(ctx.candidate.choices)
 
 
+def test_contain_that_cannot_be_satisfied_keeps_the_compared_plan(tiny_city) -> None:
+    script = {"analyst.step": [reply({"recommendation": "contain", "tool_call_ids": []})]}
+    text = FESTIVAL + ". No credential rotation."
+    ctx, events = _run(tiny_city, Always(True), llm=ScriptedLLM(script), constraints=text)
+    assert any("keeping the city-wide plan" in e.summary for e in events)
+    assert not any(c.kind.value == "must_fix" for c in ctx.constraints)
+    assert events[-1].summary.startswith("Run complete")
+
+
 def test_unextractable_advisory_stops_cleanly(tiny_city) -> None:
     ctx, events = _run(tiny_city, Always(True), text="lights are flickering")
     assert ctx.applied == {} and events[-1].agent == AgentName.SYSTEM
@@ -169,7 +179,9 @@ def test_gate_hands_a_decision_across_threads() -> None:
     gate = ApprovalGate()
     request = {"plan_id": "plan-x", "kind": "plan"}
     result = {}
-    worker = threading.Thread(target=lambda: result.setdefault("d", gate.ask(request, timeout_s=5)))
+    worker = threading.Thread(
+        target=lambda: result.setdefault("d", gate.ask(request, timeout_s=5, announce=lambda: None))
+    )
     worker.start()
     for _ in range(500):
         if gate.pending:
@@ -182,8 +194,19 @@ def test_gate_hands_a_decision_across_threads() -> None:
     assert result["d"] == ApprovalDecision("plan-x", True, "approver") and gate.pending is None
 
 
+def test_gate_accepts_an_answer_given_the_moment_it_is_announced() -> None:
+    gate = ApprovalGate()
+    accepted = []
+    decision = gate.ask(
+        {"plan_id": "plan-x", "kind": "plan"},
+        5,
+        lambda: accepted.append(gate.submit("plan-x", True, "approver")),
+    )
+    assert accepted == [True] and decision == ApprovalDecision("plan-x", True, "approver")
+
+
 def test_gate_times_out() -> None:
-    assert ApprovalGate().ask({"plan_id": "p", "kind": "plan"}, timeout_s=0.01) is None
+    assert ApprovalGate().ask({"plan_id": "p", "kind": "plan"}, 0.01, lambda: None) is None
 
 
 @pytest.mark.parametrize("approve", [True, False])

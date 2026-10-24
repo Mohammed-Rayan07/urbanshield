@@ -195,6 +195,8 @@ def _context(ctx: RunContext, plan_view: dict[str, Any], history: list[dict[str,
     devices = []
     for d in ctx.city.devices:
         entry_like = d.exposed or d.category == Category.EV_CHARGER
+        # Plain graph reachability: in the simulator a control (segment included) scales a
+        # device's odds and spread, it does not remove edges, so a segmented gateway is still a path.
         reaches = bool(corridor & ctx.engine.bfs_reach(ctx.graphs, [d.id])) if entry_like else None
         devices.append(
             {

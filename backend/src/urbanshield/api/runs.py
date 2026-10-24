@@ -44,8 +44,13 @@ class RunState:
     def _wake(self) -> None:
         with self._lock:
             waiters = list(self._waiters)
-        for loop, flag in waiters:
-            loop.call_soon_threadsafe(flag.set)
+        for waiter in waiters:
+            loop, flag = waiter
+            try:
+                loop.call_soon_threadsafe(flag.set)
+            except RuntimeError:  # that subscriber's loop has closed; it no longer listens
+                with self._lock:
+                    self._waiters.discard(waiter)
 
     def _since(self, index: int) -> tuple[list[AgentEvent], bool]:
         with self._lock:
@@ -90,10 +95,6 @@ class RunRegistry:
     def get(self, run_id: str) -> RunState | None:
         with self._lock:
             return self._runs.get(run_id)
-
-    def active(self) -> int:
-        with self._lock:
-            return sum(not r.done for r in self._runs.values())
 
     def add(self, state: RunState) -> bool:
         """Register a new run; False if too many are already running."""

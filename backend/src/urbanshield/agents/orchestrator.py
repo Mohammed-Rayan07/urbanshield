@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import logging
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -41,8 +42,11 @@ class ApprovalDecision:
 
 
 class Approvals(Protocol):
-    def ask(self, request: dict[str, Any], timeout_s: float) -> ApprovalDecision | None:
-        """Block until a human decides ``request`` (None on timeout)."""
+    def ask(
+        self, request: dict[str, Any], timeout_s: float, announce: Callable[[], None]
+    ) -> ApprovalDecision | None:
+        """Open ``request``, then call ``announce`` (which tells the human), then block until a
+        decision (None on timeout). Opening first means an instant answer is never refused."""
         ...
 
 
@@ -60,10 +64,18 @@ class ApprovalGate:
         with self._lock:
             return self._pending
 
-    def ask(self, request: dict[str, Any], timeout_s: float) -> ApprovalDecision | None:
+    def ask(
+        self, request: dict[str, Any], timeout_s: float, announce: Callable[[], None]
+    ) -> ApprovalDecision | None:
         with self._lock:
             self._pending, self._decision = dict(request), None
             self._decided.clear()
+        try:
+            announce()
+        except BaseException:
+            with self._lock:
+                self._pending = None
+            raise
         self._decided.wait(timeout_s)
         with self._lock:
             decision, self._pending = self._decision, None
@@ -87,8 +99,11 @@ def _human(
     ctx: RunContext, approvals: Approvals, request: dict[str, Any], timeout_s: float, ask: str
 ) -> bool:
     """Emit the approval request, wait, record the human's answer. True only on approval."""
-    ctx.event(AgentName.SYSTEM, EventKind.DECISION, ask, {"approval": request})
-    decision = approvals.ask(request, timeout_s)
+
+    def announce() -> None:
+        ctx.event(AgentName.SYSTEM, EventKind.DECISION, ask, {"approval": request})
+
+    decision = approvals.ask(request, timeout_s, announce)
     if decision is None:
         ctx.event(
             AgentName.SYSTEM,
@@ -111,27 +126,54 @@ def _option(ctx: RunContext, device_id: str, kind: ControlKind) -> Any:
     return next(o for o in ctx.city.device(device_id).controls if o.kind == kind)
 
 
+def _allowed_options(ctx: RunContext, device_id: str) -> list[Any]:
+    """The device's options that the current constraint rows still allow."""
+    device = ctx.city.device(device_id)
+    rows = ctx.constraints
+    forbidden = {str(c.params.get("kind")) for c in rows if c.kind == ConstraintKind.FORBID_CONTROL}
+    quiet = {str(c.params.get("zone")) for c in rows if c.kind == ConstraintKind.NO_DOWNTIME_ZONE}
+    return [
+        o
+        for o in device.controls
+        if o.kind.value not in forbidden and not (device.zone in quiet and o.downtime_h > 0)
+    ]
+
+
+def _keep_plan(ctx: RunContext, affected: list[str], why: str) -> None:
+    ctx.event(
+        AgentName.SYSTEM,
+        EventKind.OBSERVE,
+        f"Contain: {why}; keeping the city-wide plan",
+        {"affected": affected},
+    )
+
+
 def _contain(ctx: RunContext, affected: list[str]) -> None:
     """``contain``: re-solve the CVaR plan so every affected device gets a control. The rows go
     to the CVaR optimiser only (the audited comparison stays unconstrained by them), and only
-    if the cheapest controls fit the budget; otherwise the compared plan stands."""
-    cheapest = [min(ctx.city.device(d).controls, key=lambda o: o.cost_inr, default=None) for d in affected]
-    if None in cheapest or sum(o.cost_inr for o in cheapest if o) > ctx.budget.inr:
-        ctx.event(
-            AgentName.SYSTEM,
-            EventKind.OBSERVE,
-            "Contain: the affected devices cannot all be covered within budget; keeping the city-wide plan",
-            {"affected": affected},
-        )
+    if the cheapest allowed controls fit the budget and the downtime window; otherwise, or if the
+    solver still finds the rows infeasible, the compared plan stands."""
+    allowed = [_allowed_options(ctx, d) for d in affected]
+    cheapest = [min(opts, key=lambda o: o.cost_inr) for opts in allowed if opts]
+    fits = (
+        len(cheapest) == len(affected)
+        and sum(o.cost_inr for o in cheapest) <= ctx.budget.inr
+        and sum(min(o.downtime_h for o in opts) for opts in allowed) <= ctx.budget.downtime_h
+    )
+    if not fits:
+        _keep_plan(ctx, affected, "the affected devices cannot all be covered within budget and constraints")
         return
+    before = list(ctx.constraints)
     rows = [Constraint(kind=ConstraintKind.MUST_FIX, params={"device_id": d}) for d in affected]
     ctx.constraints.extend(r for r in rows if r not in ctx.constraints)
-    record = tools.call(
-        ctx,
-        AgentName.PLANNER,
-        "optimize",
-        {"budget_inr": ctx.budget.inr, "downtime_h": ctx.budget.downtime_h},
-    )
+    args = {"budget_inr": ctx.budget.inr, "downtime_h": ctx.budget.downtime_h}
+    try:
+        record = tools.call(ctx, AgentName.PLANNER, "optimize", args)
+    except Exception as exc:  # an infeasible combination: say so and keep the audited plan
+        log.warning("contain re-solve failed: %s", exc)
+        ctx.constraints[:] = before
+        _keep_plan(ctx, affected, f"the optimiser could not satisfy the rows ({type(exc).__name__})")
+        return
     stamp(ctx, record)
     ctx.candidate = ctx.plans[record.result["plan_id"]]
     ctx.event(

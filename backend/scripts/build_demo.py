@@ -26,7 +26,8 @@ FRONTEND_CITY_ID = "mangaluru-demo"  # frontend/src/api.ts CITY_ID
 
 
 class _ApproveAll:
-    def ask(self, request: dict, timeout_s: float) -> ApprovalDecision:
+    def ask(self, request: dict, timeout_s: float, announce) -> ApprovalDecision:
+        announce()
         return ApprovalDecision(plan_id=request["plan_id"], approve=True, role="build_demo")
 
 

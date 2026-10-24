@@ -138,7 +138,7 @@ def quarantine_extract(raw_text: str, llm: LLM) -> Advisory:
         fields = _Extracted.model_validate(data)
     except ValidationError as exc:
         bad = sorted({str(e["loc"][0]) for e in exc.errors() if e["loc"]})
-        raise ValueError(f"extractor output failed validation: {', '.join(bad) or 'shape'}") from None
+        raise ValueError(f"missing or invalid field(s): {', '.join(bad) or 'shape'}") from None
     return Advisory(**fields.model_dump(), source_sha256=sha256_text(raw_text))
 
 
@@ -147,8 +147,11 @@ def _contains(a: str, b: str) -> bool:
     return bool(a and b) and (a in b or b in a)
 
 
-def _version(text: str) -> tuple[int, ...]:
-    return tuple(int(p) for p in text.split("."))
+def _same_version(a: str, b: str) -> bool:
+    """Numeric compare with missing parts as zero, so ``4.2 == 4.2.0`` (as in the Sentinel)."""
+    x, y = (tuple(int(p) for p in v.split(".")) for v in (a, b))
+    width = max(len(x), len(y))
+    return x + (0,) * (width - len(x)) == y + (0,) * (width - len(y))
 
 
 def _feed_affected_below(record: dict[str, Any]) -> str | None:
@@ -188,7 +191,9 @@ def cross_check(advisory: Advisory, feed_lookup: Callable[[str], dict | None]) -
             found.append(f"{name} {claimed!r} does not match the feed's {pinned!r}")
 
     pinned_bound = _feed_affected_below(record)
-    if pinned_bound is not None and _version(pinned_bound) != _version(advisory.affected_below):
+    if pinned_bound is None:
+        found.append(f"feed record for {cve} states no affected version range; affected_below unverified")
+    elif not _same_version(pinned_bound, advisory.affected_below):
         found.append(f"affected_below {advisory.affected_below} differs from the feed's {pinned_bound}")
     return found
 

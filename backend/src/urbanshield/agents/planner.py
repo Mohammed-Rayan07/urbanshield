@@ -109,8 +109,9 @@ def _validate_row(ctx: RunContext, row: Any, sha: str) -> Constraint | None:
         case ConstraintKind.BUDGET.value | ConstraintKind.DOWNTIME.value:
             key = "inr" if kind == ConstraintKind.BUDGET.value else "hours"
             number = params.get(key)
-            # json.loads accepts Infinity and NaN, so finiteness is checked too.
-            ok = isinstance(number, int | float) and not isinstance(number, bool) and 0 < number < math.inf
+            # json.loads accepts Infinity and NaN; rupees are whole, so ₹0.5 must not become ₹0.
+            is_number = isinstance(number, int | float) and not isinstance(number, bool)
+            ok = is_number and math.isfinite(number) and number >= (1 if key == "inr" else 0) and number > 0
             if not ok:
                 _reject(ctx, f"Constraint rejected: {kind} needs a positive {key}", {"row": str(row)[:200]})
             value = number if ok else None
@@ -166,6 +167,7 @@ def parse_constraints(ctx: RunContext, text: str) -> list[Constraint]:
         return []
 
     accepted: list[Constraint] = []
+    accepted_any = False
     for row in rows[:MAX_ROWS]:
         constraint = _validate_row(ctx, row, sha)
         if constraint is None:
@@ -182,8 +184,9 @@ def parse_constraints(ctx: RunContext, text: str) -> list[Constraint]:
             EventKind.DECISION,
             f"Constraint: {_describe(constraint)}",
             {"constraint": constraint.model_dump()},
-            usage=response.usage,
+            usage=None if accepted_any else response.usage,  # count the call's tokens once
         )
+        accepted_any = True
     return accepted
 
 

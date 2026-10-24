@@ -322,7 +322,8 @@ def _t_compare(ctx: RunContext, a: BudgetArgs) -> dict[str, Any]:
 def _t_optimize(ctx: RunContext, a: BudgetArgs) -> dict[str, Any]:
     budget = Budget(inr=a.budget_inr, downtime_h=a.downtime_h, alpha=ctx.budget.alpha)
     plan = ctx.engine.solve_cvar(ctx.city, ctx.train_losses, budget, list(ctx.constraints))
-    plan = plan.model_copy(update={"metrics": ctx.engine.evaluate_plan(ctx.city, plan, ctx.budget.alpha)})
+    metrics = ctx.engine.evaluate_plan(ctx.city, plan, ctx.budget.alpha, n_scenarios=ctx.n_scenarios)
+    plan = plan.model_copy(update={"metrics": metrics})
     ctx.plans[plan.id] = plan
     return {"plan_id": plan.id, "plans": {plan.id: plan_brief(plan)}}
 

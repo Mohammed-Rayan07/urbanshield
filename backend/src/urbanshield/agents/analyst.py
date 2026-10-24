@@ -106,8 +106,24 @@ def assess(ctx: RunContext, matches: list[Match]) -> Assessment:
     ]
 
     simulation: ToolResult = [r for r in results if r.tool == "simulate"][-1]
-    lost = sorted({d for r in results if r.tool == "blast_radius" for d in r.result["lost"]})
-    corridor = sorted({d for r in results if r.tool == "bfs_reach" for d in r.result["corridor_reached"]})
+    # Only results about the matched devices count: citing an unrelated hub cannot inflate them.
+    mine = set(affected)
+    lost = sorted(
+        {
+            d
+            for r in results
+            if r.tool == "blast_radius" and r.result["device_id"] in mine
+            for d in r.result["lost"]
+        }
+    )
+    corridor = sorted(
+        {
+            d
+            for r in results
+            if r.tool == "bfs_reach" and set(r.args["sources"]) <= mine
+            for d in r.result["corridor_reached"]
+        }
+    )
     assessment = Assessment(
         affected=affected,
         blast_radius=lost,

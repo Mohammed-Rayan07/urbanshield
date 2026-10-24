@@ -113,7 +113,13 @@ def test_unextractable_text_stops_with_an_error_event(tiny_city) -> None:
 
 def test_no_match_and_consistent_means_monitor(tiny_city) -> None:
     text = PRESETS["normal_01_lumenos"]["text"].replace("4.2.0", "4.0.0")
-    feed = {"cve_id": "CVE-2025-31337", "cvss": 6.1, "vendor": "Lumenos", "product": "SL-200"}
+    feed = {
+        "cve_id": "CVE-2025-31337",
+        "cvss": 6.1,
+        "vendor": "Lumenos",
+        "product": "SL-200",
+        "affected_below": "4.0.0",
+    }
     city = tiny_city.model_copy(
         update={"devices": [d.model_copy(update={"vulns": []}) for d in tiny_city.devices]}
     )

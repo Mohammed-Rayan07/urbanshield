@@ -90,7 +90,13 @@ def engine_ready(engine: Engine) -> bool:
         city = engine.generate_city(seed=0)
         losses = engine.simulate(city, n_scenarios=20, seed=0)
         engine.cvar(losses.total, 0.95)
-        engine.build_graphs(city)
+        graphs = engine.build_graphs(city)
+        first = city.devices[0].id
+        engine.bfs_reach(graphs, [first])
+        engine.blast_radius(graphs, first)
+        engine.feed_record("CVE-0000-0000")
+        # compare runs solve and evaluate_plan for every objective; tiny inputs keep it quick.
+        engine.compare(city, Budget(inr=1, downtime_h=1), [], n_scenarios=20)
     except NotImplementedError:
         return False
     return True

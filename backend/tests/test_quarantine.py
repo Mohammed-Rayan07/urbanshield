@@ -155,6 +155,18 @@ def test_valid_but_wrong_fields_are_flagged(overrides, needle) -> None:
     assert any(needle in d for d in found), found
 
 
+def test_versions_compare_numerically_with_zero_padding() -> None:
+    record = fake_feed_record("CVE-2025-31337") | {"affected_below": "4.2"}
+    assert cross_check(_advisory(affected_below="4.2.0"), lambda _: record) == []
+    assert cross_check(_advisory(affected_below="4.2.1"), lambda _: record)
+
+
+def test_feed_without_a_version_range_fails_closed() -> None:
+    record = fake_feed_record("CVE-2025-31337") | {"summary": "Allows an authentication bypass."}
+    [found] = cross_check(_advisory(), lambda _: record)
+    assert "no affected version range" in found
+
+
 def test_small_cvss_difference_is_tolerated() -> None:
     assert cross_check(_advisory(cvss=6.5), fake_feed_record) == []
 
