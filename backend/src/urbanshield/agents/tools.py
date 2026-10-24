@@ -16,6 +16,7 @@ identical prompts and replay exactly.
 from __future__ import annotations
 
 import itertools
+import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
@@ -47,6 +48,11 @@ DEFAULT_ALPHA = 0.95
 
 class ToolArgError(ValueError):
     """The arguments for a tool call did not validate."""
+
+
+def dumps(value: Any) -> str:
+    """Canonical JSON for prompts: sorted keys, no whitespace, so identical runs send identical bytes."""
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
 # --------------------------------------------------------------------------- run state

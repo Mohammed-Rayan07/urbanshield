@@ -11,6 +11,7 @@ transcript-determinism tests.
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import itertools
 import json
@@ -24,7 +25,7 @@ from typing import Any
 import numpy as np
 
 from urbanshield.agents.engine import Engine
-from urbanshield.agents.llm import LLMResponse, Tier
+from urbanshield.agents.llm import LLMResponse, Tier, ToolCallRequest
 from urbanshield.agents.mock import MockLLM
 from urbanshield.agents.tools import RunContext
 from urbanshield.config import Settings
@@ -35,6 +36,7 @@ from urbanshield.schemas import (
     Constraint,
     ConstraintKind,
     ControlKind,
+    LLMUsage,
     Objective,
     Plan,
     PlanMetrics,
@@ -333,9 +335,14 @@ class SpyLLM:
         tools: list[dict[str, Any]] | None = None,
         json_output: bool = False,
     ) -> LLMResponse:
-        self.requests.append(
-            {"task": task, "tier": tier, "messages": messages, "tools": tools, "json_output": json_output}
-        )
+        request = {
+            "task": task,
+            "tier": tier,
+            "messages": messages,
+            "tools": tools,
+            "json_output": json_output,
+        }
+        self.requests.append(copy.deepcopy(request))  # callers keep appending to ``messages``
         return self.inner.chat(task, messages, tier=tier, tools=tools, json_output=json_output)
 
     def transcript(self) -> str:
@@ -343,3 +350,32 @@ class SpyLLM:
 
     def requests_for(self, prefix: str) -> list[dict[str, Any]]:
         return [r for r in self.requests if r["task"].startswith(prefix)]
+
+
+def reply(content: dict | str | None = None, calls: list[tuple[str, dict]] = ()) -> LLMResponse:
+    """A canned response: JSON content and/or tool calls ``[(name, arguments), ...]``."""
+    text = json.dumps(content) if isinstance(content, dict) else content
+    usage = LLMUsage(model="scripted", prompt_tokens=10, completion_tokens=5, latency_ms=0)
+    requests = [ToolCallRequest(id=f"call_{i}", name=n, arguments=a) for i, (n, a) in enumerate(calls)]
+    return LLMResponse(content=text, tool_calls=requests, usage=usage)
+
+
+@dataclass
+class ScriptedLLM:
+    """Answers tasks listed in ``script`` in order; everything else goes to the mock."""
+
+    script: dict[str, list[LLMResponse]]
+    mode: str = "mock"
+    fallback: Any = field(default_factory=MockLLM)
+
+    def chat(
+        self,
+        task: str,
+        messages: list[dict[str, Any]],
+        tier: Tier = "strong",
+        tools: list[dict[str, Any]] | None = None,
+        json_output: bool = False,
+    ) -> LLMResponse:
+        if self.script.get(task):
+            return self.script[task].pop(0)
+        return self.fallback.chat(task, messages, tier=tier, tools=tools, json_output=json_output)

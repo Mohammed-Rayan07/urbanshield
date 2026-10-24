@@ -60,8 +60,113 @@ def _extract(messages: list[dict[str, Any]]) -> tuple[str | None, list[ToolCallR
     return json.dumps(fields, sort_keys=True), []
 
 
+# --------------------------------------------------------------------------- analyst.step
+
+
+def _calls(messages: list[dict[str, Any]], wanted: list[tuple[str, dict[str, Any]]]) -> list[ToolCallRequest]:
+    step = sum(1 for m in messages if m.get("role") == "assistant")
+    return [ToolCallRequest(id=f"call_{step}_{i}", name=n, arguments=a) for i, (n, a) in enumerate(wanted)]
+
+
+def _tool_results(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Successful tool results the loop sent back: ``{"tool", "tool_call_id", "result"}``."""
+    out = []
+    for m in messages:
+        if m.get("role") == "tool":
+            body = json.loads(m["content"])
+            if "tool_call_id" in body:
+                out.append(body)
+    return out
+
+
+def _user_json(messages: list[dict[str, Any]]) -> dict[str, Any]:
+    text = next(str(m["content"]) for m in messages if m.get("role") == "user")
+    return json.loads(text[text.index("{") :])
+
+
+def _analyst(messages: list[dict[str, Any]]) -> tuple[str | None, list[ToolCallRequest]]:
+    """Scripted investigation: blast radius + reachability, then one simulation, then decide."""
+    affected = [a["device_id"] for a in _user_json(messages)["affected"]]
+    results = _tool_results(messages)
+    done = {r["tool"] for r in results}
+    if not done:
+        wanted = [("blast_radius", {"device_id": d}) for d in affected]
+        return None, _calls(messages, [*wanted, ("bfs_reach", {"sources": affected})])
+    if "simulate" not in done:
+        return None, _calls(messages, [("simulate", {})])
+    corridor = any(r["result"].get("corridor_reached") for r in results if r["tool"] == "bfs_reach")
+    critical = any(r["result"].get("critical_lost") for r in results if r["tool"] == "blast_radius")
+    recommendation = "replan" if corridor or critical else "contain" if affected else "monitor"
+    answer = {"recommendation": recommendation, "tool_call_ids": [r["tool_call_id"] for r in results]}
+    return json.dumps(answer, sort_keys=True), []
+
+
+# --------------------------------------------------------------------------- planner
+
+
+_KIND_WORDS = {
+    "segment": ("segmentation", "segmenting", "segment"),
+    "patch": ("patching", "patches"),
+    "disable_remote": ("remote disable", "disabling remote access", "disable remote"),
+    "rotate_creds": ("credential rotation", "rotating credentials", "rotate creds"),
+    "virtual_patch": ("virtual patching", "virtual patches"),
+}
+_UNITS = {"lakh": 100_000, "lakhs": 100_000, "l": 100_000, "crore": 10_000_000, "k": 1_000, "": 1}
+
+
+def _constraints(messages: list[dict[str, Any]]) -> tuple[str | None, list[ToolCallRequest]]:
+    """Operator phrases by regex. Names are copied as written; validation is the code's job."""
+    text = _first(r"<operator>\n(.*)\n</operator>", _text(messages, "user"), re.DOTALL)
+    rows: list[dict[str, Any]] = []
+    if re.search(r"\bno\b[\w -]{0,30}\bdowntime\b", text, re.IGNORECASE):
+        zone = _first(r"downtime (?:in|for|across) ((?:zone )?[\w-]+(?: \d+)?)", text) or _first(
+            r"((?:zone )?[\w-]+(?: \d+)?) (?:festival|event|parade|closure)", text
+        )
+        if zone:
+            rows.append({"kind": "no_downtime_zone", "params": {"zone": zone}})
+    for device in re.findall(r"must (?:fix|patch|protect) (d-\d+)", text, re.IGNORECASE):
+        rows.append({"kind": "must_fix", "params": {"device_id": device}})
+    lowered = text.lower()
+    for kind, words in _KIND_WORDS.items():
+        if any(f"no {w}" in lowered or f"don't use {w}" in lowered for w in words):
+            rows.append({"kind": "forbid_control", "params": {"kind": kind}})
+    budget = re.search(
+        r"budget[^\d₹]{0,20}₹?\s*([\d,]+(?:\.\d+)?)\s*(lakhs?|l|crore|k)?\b", text, re.IGNORECASE
+    )
+    if budget:
+        amount = float(budget.group(1).replace(",", "")) * _UNITS[(budget.group(2) or "").lower()]
+        rows.append({"kind": "budget", "params": {"inr": int(amount)}})
+    hours = _first(r"(\d+(?:\.\d+)?)\s*(?:h|hours?)\b(?: of)?(?: total)? downtime", text)
+    if hours:
+        rows.append({"kind": "downtime", "params": {"hours": float(hours)}})
+    return json.dumps({"constraints": rows}, sort_keys=True), []
+
+
+def _claims(messages: list[dict[str, Any]]) -> tuple[str | None, list[ToolCallRequest]]:
+    """Exact claims copied from the compare result. The mock never invents a wrong number,
+    so Auditor rejections in mock runs only come from the code paths, never staged."""
+    source = _user_json(messages)
+    result = source["result"]
+    a, b = result["plans"][result["a"]], result["plans"][result["b"]]
+    claims = [
+        {
+            "metric": m,
+            "plan_a": a[m],
+            "plan_b": b[m],
+            "delta": b[m] - a[m],
+            "tool_call_id": source["tool_call_id"],
+        }
+        for m in ("cvar", "mean_loss", "max_cascade")
+        if m in a and m in b
+    ]
+    return json.dumps({"claims": claims}, sort_keys=True), []
+
+
 RESPONDERS: dict[str, Responder] = {
     "sentinel.extract": _extract,
+    "analyst.step": _analyst,
+    "planner.constraints": _constraints,
+    "planner.claims": _claims,
 }
 
 
