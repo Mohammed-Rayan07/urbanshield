@@ -26,6 +26,7 @@ from urbanshield.agents.engine import Engine
 from urbanshield.agents.llm import LLM
 from urbanshield.guard.allowlist import ALLOWLIST, ToolNotAllowed, authorize
 from urbanshield.schemas import (
+    CVE_PATTERN,
     AgentEvent,
     AgentName,
     Budget,
@@ -133,12 +134,12 @@ class TextRef(Args):
 
 
 class AdvisoryArgs(Args):
-    cve_id: str
-    vendor: str
-    product: str
-    firmware_family: str
-    affected_below: str
-    cvss: float
+    cve_id: str = Field(pattern=CVE_PATTERN)
+    vendor: str = Field(max_length=64)
+    product: str = Field(max_length=64)
+    firmware_family: str = Field(max_length=64)
+    affected_below: str = Field(max_length=32)
+    cvss: float = Field(ge=0, le=10)
 
 
 class BfsArgs(Args):
@@ -238,6 +239,8 @@ def _blocked(ctx: RunContext) -> list[str]:
 def _t_quarantine_extract(ctx: RunContext, a: TextRef) -> dict[str, Any]:
     from urbanshield.guard.quarantine import quarantine_extract
 
+    if a.text_sha256 not in ctx.untrusted:
+        raise ToolArgError("no quarantined text with that sha256 in this run")
     advisory = quarantine_extract(ctx.untrusted[a.text_sha256], ctx.llm)
     return {"advisory": advisory.model_dump()}
 

@@ -1,0 +1,9 @@
+Lumenos Product Security Bulletin LSB-2025-07 (corrected)
+
+Vendor: Lumenos
+Product: SL-200 streetlight controller
+CVE: CVE-2025-31337
+CVSS v3.1 base score: 6.1 (Medium)
+
+Correction: only very old controllers are affected. Affected firmware: lumenos, versions
+prior to 4.0.0. Controllers on 4.x are not vulnerable and need no action.

@@ -1,0 +1,10 @@
+VOLTGRID SECURITY ADVISORY VSA-24-011
+
+Manufacturer: Voltgrid
+Model: VG-50 EV charger
+Identifier: CVE-2024-48201, CVSS 5.4
+
+A debug service left enabled in production builds listens on TCP 2323 and accepts a
+hard-coded maintenance password. Chargers running voltgrid firmware before 2.1.0 are
+affected. Firmware 2.1.0 disables the service. Chargers often bridge the charging network
+and the city traffic network, so treat them as gateways when you assess exposure.
