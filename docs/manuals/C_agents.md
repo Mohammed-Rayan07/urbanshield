@@ -1,6 +1,6 @@
-# Manual C — Agents, guardrails, API (Rayan, integrator)
+# Manual C — Agents, guardrails, API
 
-**Owner:** Rayan · **Branch:** `c/agents` · **Tests:** `tests/test_agents.py`, `tests/test_api.py`, guard tests for quarantine/allowlist, plus new agent tests you add.
+**Owner:** Anubhav (handed over from Rayan; read `docs/manuals/C_HANDOFF.md` on `c/agents` first) · **Branch:** `c/agents` · **Tests:** `tests/test_agents.py`, `tests/test_api.py`, guard tests for quarantine/allowlist, plus new agent tests you add.
 
 ## You own
 

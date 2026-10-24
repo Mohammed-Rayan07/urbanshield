@@ -8,7 +8,7 @@ to build; the tests tell it when it's done. You review, run, commit and push.
 | A — City twin, graphs, vulnerability feed | [A_city.md](A_city.md) | `a/city` | Prabhav (`Prabhavravi`) |
 | B — Optimiser, baselines, evaluation, benchmark | [B_optimizer.md](B_optimizer.md) | `b/optimizer` | Sai Varun (`Sai-Varun-Tej`) |
 | S — Attack simulator, audit log, Auditor | [S_sim_audit.md](S_sim_audit.md) | `s/sim-audit` | Anubhav (`anubhav10cs`) |
-| C — Agents, guardrails, API (integrator) | [C_agents.md](C_agents.md) | `c/agents` | Rayan |
+| C — Agents, guardrails, API | [C_agents.md](C_agents.md) + `C_HANDOFF.md` on `c/agents` | `c/agents` | Anubhav (`anubhav10cs`), after S |
 | D — Dashboard + demo video | [D_frontend.md](D_frontend.md) | `d/frontend` | Rayan |
 
 ## 1. Install (Windows, PowerShell)
