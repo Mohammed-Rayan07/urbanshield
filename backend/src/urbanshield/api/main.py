@@ -22,7 +22,7 @@ from collections.abc import AsyncIterator, Callable
 from contextlib import closing
 from typing import Annotated, Any
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -54,6 +54,8 @@ log = logging.getLogger("urbanshield.api")
 
 APPROVER = "approver"
 PLANS_TOOL_ID = "tc-plans"
+PREVIEW_CONCURRENCY = 2  # each preview is one LLM call; bound the spend and the threadpool
+MAX_AUDIT_PAGE = 5000
 
 
 class IncidentRequest(BaseModel):
@@ -111,13 +113,14 @@ class AuditHead:
             if self.seq is None or seq > self.seq:
                 self.seq, self.hash = seq, digest
 
-    def check(self, entries: list[AuditEntry]) -> str | None:
-        """Why ``entries`` contradict the published head, or None."""
+    def check(self, audit: AuditLog) -> str | None:
+        """Why the stored log contradicts the published head, or None."""
         with self._lock:
             seq, digest = self.seq, self.hash
         if seq is None:
             return None
-        if len(entries) <= seq or entries[seq].hash != digest:
+        at = audit.entries(after_seq=seq - 1, limit=1)
+        if not at or at[0].seq != seq or at[0].hash != digest:
             return "log shorter than previously published head"
         return None
 
@@ -156,7 +159,8 @@ def create_app(
     budget = Budget(inr=settings.budget_inr, downtime_h=settings.downtime_h)
     city_cache: dict[str, City] = {}
     plans_cache: dict[str, Any] = {}
-    plans_lock = threading.Lock()
+    cache_lock = threading.RLock()  # first requests may race; generation and compare run once
+    previews = threading.BoundedSemaphore(PREVIEW_CONCURRENCY)
 
     app = FastAPI(
         title="UrbanShield API",
@@ -177,9 +181,10 @@ def create_app(
     def the_city() -> City:
         if not is_live:
             return fixtures.demo_city()
-        if "city" not in city_cache:
-            city_cache["city"] = engine.generate_city(seed=settings.city_seed)
-        return city_cache["city"]
+        with cache_lock:
+            if "city" not in city_cache:
+                city_cache["city"] = engine.generate_city(seed=settings.city_seed)
+            return city_cache["city"]
 
     def city_or_404(city_id: str) -> City:
         city = the_city()
@@ -189,7 +194,7 @@ def create_app(
 
     def live_plans() -> tuple[list[Plan], ToolResult]:
         """``compare`` under the demo budget, computed once and recorded for provenance."""
-        with plans_lock:
+        with cache_lock:
             if "plans" not in plans_cache:
                 city = the_city()
                 plans = engine.compare(city, budget, [], n_scenarios=settings.n_scenarios)
@@ -223,12 +228,10 @@ def create_app(
             if failed.is_set():
                 state.push(event)
                 return
-            if event.kind == EventKind.APPLY and audit is not None:
-                current = audit.entries()
-                if current:
-                    head.publish(current[-1].seq, current[-1].hash)
-                    tip = {"seq": current[-1].seq, "hash": current[-1].hash}
-                    event = event.model_copy(update={"payload": event.payload | {"audit_head": tip}})
+            if event.kind == EventKind.APPLY and audit is not None and (last := audit.head()) is not None:
+                head.publish(last.seq, last.hash)
+                tip = {"seq": last.seq, "hash": last.hash}
+                event = event.model_copy(update={"payload": event.payload | {"audit_head": tip}})
             try:
                 require_audit().append(event)
             except (HTTPException, sqlite3.Error, OSError) as exc:
@@ -253,7 +256,11 @@ def create_app(
             finally:
                 state.finish()
 
-        threading.Thread(target=work, name=f"run-{state.run_id}", daemon=True).start()
+        try:
+            threading.Thread(target=work, name=f"run-{state.run_id}", daemon=True).start()
+        except RuntimeError as exc:  # could not start a thread: free the slot, tell the caller
+            state.finish()
+            raise HTTPException(status_code=503, detail="could not start the run; try again") from exc
 
     # ------------------------------------------------------------------ routes
 
@@ -280,7 +287,16 @@ def create_app(
         city_or_404(city_id)
         return live_plans()[0] if is_live else list(fixtures.demo_plans())
 
-    @app.post("/api/cities/{city_id}/incidents", response_model=IncidentStarted, status_code=202)
+    @app.post(
+        "/api/cities/{city_id}/incidents",
+        response_model=IncidentStarted,
+        status_code=202,
+        responses={
+            404: {"description": "Unknown city"},
+            429: {"description": "Too many incidents running (see Retry-After)"},
+            503: {"description": "Audit log unavailable, or the run could not start"},
+        },
+    )
     def start_incident(city_id: str, body: IncidentRequest) -> IncidentStarted:
         city = city_or_404(city_id)
         if not is_live:
@@ -297,11 +313,22 @@ def create_app(
             n_scenarios=settings.n_scenarios,
         )
         if not runs.add(state):
-            raise HTTPException(status_code=429, detail="too many incidents running; try again shortly")
+            raise HTTPException(
+                status_code=429,
+                detail="too many incidents running; try again shortly",
+                headers={"Retry-After": "30"},
+            )
         run_in_background(state, body)
         return IncidentStarted(run_id=state.run_id)
 
-    @app.get("/api/runs/{run_id}/events")
+    @app.get(
+        "/api/runs/{run_id}/events",
+        response_class=StreamingResponse,
+        responses={
+            200: {"content": {"text/event-stream": {}}, "description": "AgentEvent JSON per data: line"},
+            404: {"description": "Unknown run"},
+        },
+    )
     async def stream_events(run_id: str) -> StreamingResponse:
         """Server-Sent Events: one ``AgentEvent`` JSON per ``data:`` line, then ``event: done``.
         Reconnecting replays the run from its first event."""
@@ -327,7 +354,16 @@ def create_app(
             follow(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"}
         )
 
-    @app.post("/api/runs/{run_id}/approvals", response_model=AgentEvent)
+    @app.post(
+        "/api/runs/{run_id}/approvals",
+        response_model=AgentEvent,
+        responses={
+            403: {"description": "Missing X-Role: approver"},
+            404: {"description": "Unknown run"},
+            409: {"description": "No pending approval for this plan_id"},
+            504: {"description": "Decision recorded but not yet acknowledged; do not retry"},
+        },
+    )
     async def approve(
         run_id: str, body: ApprovalRequest, x_role: Annotated[str | None, Header()] = None
     ) -> AgentEvent:
@@ -347,16 +383,27 @@ def create_app(
         state = runs.get(run_id)
         if state is None:
             raise HTTPException(status_code=404, detail=f"unknown run {run_id!r}")
-        seen = len(state.events)
+        seen = state.count()
         if not state.gate.submit(body.plan_id, body.approve, APPROVER):
             raise HTTPException(status_code=409, detail=f"no pending approval for {body.plan_id!r}")
         deadline = time.monotonic() + 10
         while time.monotonic() < deadline:  # the worker records the decision as an event
-            event = next((e for e in state.events[seen:] if e.agent == AgentName.HUMAN), None)
+            recent, _ = state.since(seen)
+            event = next(
+                (
+                    e
+                    for e in recent
+                    if e.agent == AgentName.HUMAN and e.payload.get("plan_id") == body.plan_id
+                ),
+                None,
+            )
             if event is not None:
                 return event
             await asyncio.sleep(0.02)
-        raise HTTPException(status_code=504, detail="decision recorded, but the run did not acknowledge it")
+        raise HTTPException(
+            status_code=504,
+            detail="decision recorded; the timeline will show it shortly (do not resubmit)",
+        )
 
     @app.get("/api/runs/{run_id}/tool-results/{tool_call_id}", response_model=ToolResult)
     def get_run_tool_result(run_id: str, tool_call_id: str) -> ToolResult:
@@ -394,10 +441,18 @@ def create_app(
         fields = ("id", "kind", "title", "text")
         return [AdvisoryPreset(**{k: p[k] for k in fields}) for p in quarantine.load_presets()]
 
-    @app.post("/api/quarantine/preview", response_model=QuarantinePreview)
+    @app.post(
+        "/api/quarantine/preview",
+        response_model=QuarantinePreview,
+        responses={429: {"description": "Too many previews in flight (each is an LLM call)"}},
+    )
     def quarantine_preview(body: QuarantinePreviewRequest) -> QuarantinePreview:
         """Run the real quarantine on pasted text: the typed advisory and the feed cross-check.
         Works without the city or optimiser, so Judge Mode is real as early as possible."""
+        if not previews.acquire(blocking=False):
+            raise HTTPException(
+                status_code=429, detail="previews are busy; try again", headers={"Retry-After": "5"}
+            )
         text = body.advisory_text
         advisory: Advisory | None = None
         discrepancies: list[str] = []
@@ -411,6 +466,8 @@ def create_app(
         except Exception as exc:  # provider outage etc.: report it, never pretend it passed
             log.exception("quarantine extractor failed")
             error = f"extractor unavailable ({type(exc).__name__})"
+        finally:
+            previews.release()
         if advisory is not None:
             discrepancies = quarantine.cross_check(advisory, engine.feed_record)
         return QuarantinePreview(
@@ -421,9 +478,17 @@ def create_app(
             error=error,
         )
 
-    @app.get("/api/audit/entries", response_model=list[AuditEntry])
-    def audit_entries() -> list[AuditEntry]:
-        return require_audit().entries()
+    @app.get(
+        "/api/audit/entries",
+        response_model=list[AuditEntry],
+        responses={503: {"description": "Audit log unavailable"}},
+    )
+    def audit_entries(
+        after_seq: Annotated[int, Query(ge=-1)] = -1,
+        limit: Annotated[int, Query(ge=1, le=MAX_AUDIT_PAGE)] = MAX_AUDIT_PAGE,
+    ) -> list[AuditEntry]:
+        """Entries in ``seq`` order; page with ``after_seq`` (the last seq you have)."""
+        return require_audit().entries(after_seq=after_seq, limit=limit)
 
     @app.get("/api/audit/key")
     def audit_key() -> dict[str, str]:
@@ -436,11 +501,10 @@ def create_app(
         this server has published (tail truncation)."""
         log_ = require_audit()
         result = log_.verify()
-        entries = log_.entries()
-        tip = entries[-1] if entries else None
+        tip = log_.head()
         current = {"head_seq": tip.seq if tip else None, "head_hash": tip.hash if tip else None}
-        if result.ok and (reason := head.check(entries)) is not None:
-            return VerifyResult(ok=False, entries=len(entries), reason=reason, truncated=True, **current)
+        if result.ok and (reason := head.check(log_)) is not None:
+            return VerifyResult(ok=False, entries=result.entries, reason=reason, truncated=True, **current)
         if result.ok and tip is not None:
             head.publish(tip.seq, tip.hash)
         return result.model_copy(update=current)
@@ -466,4 +530,14 @@ def create_app(
     return app
 
 
-app = create_app()
+def __getattr__(name: str) -> FastAPI:
+    """``urbanshield.api.main:app`` for uvicorn, built on first access rather than at import, so
+    importing ``create_app`` (tests, scripts) never opens the default database or reads ``.env``."""
+    if name != "app":
+        raise AttributeError(name)
+    if "app" not in _APP:
+        _APP["app"] = create_app()
+    return _APP["app"]
+
+
+_APP: dict[str, FastAPI] = {}

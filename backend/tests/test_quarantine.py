@@ -161,6 +161,11 @@ def test_versions_compare_numerically_with_zero_padding() -> None:
     assert cross_check(_advisory(affected_below="4.2.1"), lambda _: record)
 
 
+def test_malformed_version_is_a_discrepancy_not_a_crash() -> None:
+    found = cross_check(_advisory(affected_below="abc"), fake_feed_record)
+    assert any("affected_below" in d for d in found)
+
+
 def test_feed_without_a_version_range_fails_closed() -> None:
     record = fake_feed_record("CVE-2025-31337") | {"summary": "Allows an authentication bypass."}
     [found] = cross_check(_advisory(), lambda _: record)

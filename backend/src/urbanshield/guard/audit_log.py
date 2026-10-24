@@ -100,11 +100,22 @@ class AuditLog:
             signature=signature,
         )
 
-    def entries(self) -> list[AuditEntry]:
-        """Every stored entry in ``seq`` order (as stored; ``verify()`` checks them)."""
+    def entries(self, after_seq: int = -1, limit: int | None = None) -> list[AuditEntry]:
+        """Stored entries in ``seq`` order (as stored; ``verify()`` checks them), optionally
+        only those after ``after_seq`` and at most ``limit`` of them."""
+        query = f"SELECT {_COLUMNS} FROM audit_log WHERE seq > ? ORDER BY seq"
+        params: tuple[int, ...] = (after_seq,)
+        if limit is not None:
+            query, params = f"{query} LIMIT ?", (after_seq, limit)
         with closing(self._connect()) as conn:
-            rows = conn.execute(f"SELECT {_COLUMNS} FROM audit_log ORDER BY seq").fetchall()
+            rows = conn.execute(query, params).fetchall()
         return [AuditEntry(**dict(zip(_COLUMNS.split(", "), row, strict=True))) for row in rows]
+
+    def head(self) -> AuditEntry | None:
+        """The latest entry, or None for an empty log."""
+        with closing(self._connect()) as conn:
+            row = conn.execute(f"SELECT {_COLUMNS} FROM audit_log ORDER BY seq DESC LIMIT 1").fetchone()
+        return AuditEntry(**dict(zip(_COLUMNS.split(", "), row, strict=True))) if row else None
 
     def verify(self) -> VerifyResult:
         """Recompute every payload hash, chain link and signature; report the first bad ``seq``."""

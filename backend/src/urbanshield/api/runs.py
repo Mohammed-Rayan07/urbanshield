@@ -52,9 +52,20 @@ class RunState:
                 with self._lock:
                     self._waiters.discard(waiter)
 
-    def _since(self, index: int) -> tuple[list[AgentEvent], bool]:
+    def since(self, index: int) -> tuple[list[AgentEvent], bool]:
+        """Events from ``index`` on, and whether the run has finished (read under the lock)."""
         with self._lock:
             return self.events[index:], self.done
+
+    def count(self) -> int:
+        with self._lock:
+            return len(self.events)
+
+    @property
+    def holds_slot(self) -> bool:
+        """Running and computing. A run parked on a human approval does not count against
+        the limit, so unanswered incidents cannot lock everyone else out."""
+        return not self.done and self.gate.pending is None
 
     async def follow(self) -> AsyncIterator[AgentEvent | None]:
         """Every event from the start, then new ones as they arrive; ``None`` = keep-alive."""
@@ -66,7 +77,7 @@ class RunState:
             index = 0
             while True:
                 flag.clear()
-                batch, done = self._since(index)
+                batch, done = self.since(index)
                 for event in batch:
                     yield event
                 index += len(batch)
@@ -84,7 +95,8 @@ class RunState:
 
 
 class RunRegistry:
-    """Bounded: at most ``max_active`` running at once, the newest ``keep`` runs remembered."""
+    """Bounded: at most ``max_active`` computing at once (runs waiting on an approver are not
+    counted), the newest ``keep`` runs remembered."""
 
     def __init__(self, max_active: int = 2, keep: int = 50) -> None:
         self.max_active = max_active
@@ -99,7 +111,7 @@ class RunRegistry:
     def add(self, state: RunState) -> bool:
         """Register a new run; False if too many are already running."""
         with self._lock:
-            if sum(not r.done for r in self._runs.values()) >= self.max_active:
+            if sum(r.holds_slot for r in self._runs.values()) >= self.max_active:
                 return False
             self._runs[state.run_id] = state
             while len(self._runs) > self.keep:

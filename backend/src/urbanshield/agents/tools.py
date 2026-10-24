@@ -28,10 +28,10 @@ from urbanshield.agents.llm import LLM
 from urbanshield.guard.allowlist import ALLOWLIST, ToolNotAllowed, authorize
 from urbanshield.schemas import (
     CVE_PATTERN,
+    Advisory,
     AgentEvent,
     AgentName,
     Budget,
-    Category,
     City,
     Constraint,
     ControlKind,
@@ -46,6 +46,8 @@ from urbanshield.schemas import (
 
 CORRIDOR_TAG = "ambulance_corridor"
 DEFAULT_ALPHA = 0.95
+UNSOURCED_SHA256 = "0" * 64  # placeholder hash for advisories rebuilt from tool arguments
+VERSION_PATTERN = r"^\d+(\.\d+){0,3}$"
 
 
 class ToolArgError(ValueError):
@@ -153,7 +155,7 @@ class AdvisoryArgs(Args):
     vendor: str = Field(max_length=64)
     product: str = Field(max_length=64)
     firmware_family: str = Field(max_length=64)
-    affected_below: str = Field(max_length=32)
+    affected_below: str = Field(max_length=32, pattern=VERSION_PATTERN, description="e.g. 4.2.0")
     cvss: float = Field(ge=0, le=10)
 
 
@@ -256,19 +258,21 @@ def _t_quarantine_extract(ctx: RunContext, a: TextRef) -> dict[str, Any]:
     return {"advisory": advisory.model_dump()}
 
 
+def _advisory(a: AdvisoryArgs) -> Advisory:
+    # These tools check fields, not provenance: the raw text's hash stays with the extract result.
+    return Advisory(**a.model_dump(), source_sha256=UNSOURCED_SHA256)
+
+
 def _t_cross_check(ctx: RunContext, a: AdvisoryArgs) -> dict[str, Any]:
     from urbanshield.guard.quarantine import cross_check
-    from urbanshield.schemas import Advisory
 
-    advisory = Advisory(**a.model_dump(), source_sha256="0" * 64)
-    return {"discrepancies": cross_check(advisory, ctx.engine.feed_record)}
+    return {"discrepancies": cross_check(_advisory(a), ctx.engine.feed_record)}
 
 
 def _t_match_inventory(ctx: RunContext, a: AdvisoryArgs) -> dict[str, Any]:
-    from urbanshield.agents.sentinel import match_inventory
-    from urbanshield.schemas import Advisory
+    from urbanshield.agents.sentinel import match_inventory  # sentinel imports this module
 
-    matches = match_inventory(ctx.city, Advisory(**a.model_dump(), source_sha256="0" * 64))
+    matches = match_inventory(ctx.city, _advisory(a))
     return {"matches": [m.model_dump() for m in matches], "count": len(matches)}
 
 
@@ -561,4 +565,4 @@ def _describe(tool: str, args: Args, result: dict[str, Any]) -> str:
             return tool
 
 
-__all__ = ["TOOLS", "Category", "RunContext", "ToolArgError", "call", "openai_tool_specs"]
+__all__ = ["TOOLS", "RunContext", "ToolArgError", "call", "openai_tool_specs"]

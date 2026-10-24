@@ -142,6 +142,40 @@ def test_rejection_over_http(client) -> None:
     assert not any(e.summary.startswith("Applied") for e in _events(client, run_id))
 
 
+def test_runs_waiting_on_an_approver_do_not_hold_a_slot(client) -> None:
+    parked = []
+    for _ in range(3):  # max_active is 2; each run parks on its approval before the next starts
+        parked.append(_start(client))
+        _wait_pending(client, parked[-1])
+    assert _start(client)  # a fourth still starts: parked runs are not "computing"
+    for run_id in parked:
+        pending = client.app.state.runs.get(run_id).gate.pending
+        client.post(f"/api/runs/{run_id}/approvals", json={"plan_id": pending["plan_id"]}, headers=APPROVER)
+
+
+def test_busy_server_answers_429_with_retry_after(client) -> None:
+    runs = client.app.state.runs
+    runs.max_active = 0
+    r = client.post("/api/cities/tiny/incidents", json=INCIDENT)
+    assert r.status_code == 429 and r.headers["retry-after"] == "30"
+
+
+def test_audit_entries_page_and_head(tiny_city, tmp_path) -> None:
+    client = _client(tiny_city, tmp_path, approval_timeout_s=0.1)
+    events = _events(client, _start(client))
+    first = client.get("/api/audit/entries", params={"limit": 3}).json()
+    rest = client.get("/api/audit/entries", params={"after_seq": first[-1]["seq"]}).json()
+    assert [e["seq"] for e in first + rest] == list(range(len(events)))
+    assert client.get("/api/audit/entries", params={"limit": 0}).status_code == 422
+    assert client.app.state.audit.head().seq == len(events) - 1
+
+
+def test_importing_the_module_does_not_build_the_default_app() -> None:
+    import urbanshield.api.main as main
+
+    assert "app" not in vars(main)  # built lazily on first access (uvicorn), not at import
+
+
 def test_unknown_run_is_404(client) -> None:
     assert client.get("/api/runs/run-nope/events").status_code == 404
     assert (

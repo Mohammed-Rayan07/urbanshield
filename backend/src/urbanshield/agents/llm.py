@@ -31,6 +31,7 @@ from urbanshield.schemas import LLMUsage
 Tier = Literal["fast", "strong"]
 TRACES_DIR = FIXTURES_DIR / "traces"
 MAX_RETRIES = 4
+REQUEST_TIMEOUT_S = 60.0
 
 
 class ReplayMiss(RuntimeError):
@@ -123,7 +124,14 @@ class CachedLLM:
                 raise RuntimeError("LLM_MODE=live needs LLM_BASE_URL and LLM_API_KEY")
             from openai import OpenAI
 
-            self._client = OpenAI(base_url=self._settings.llm_base_url, api_key=self._settings.llm_api_key)
+            # Explicit timeout: a hung provider must not hold a run (or a preview slot) forever.
+            # Retries are ours (bounded backoff in _call), so the SDK's own are switched off.
+            self._client = OpenAI(
+                base_url=self._settings.llm_base_url,
+                api_key=self._settings.llm_api_key,
+                timeout=REQUEST_TIMEOUT_S,
+                max_retries=0,
+            )
         return self._client
 
     def chat(
@@ -159,7 +167,7 @@ class CachedLLM:
         tools: list[dict[str, Any]] | None,
         json_output: bool,
     ) -> dict[str, Any]:
-        from openai import APIStatusError, BadRequestError, RateLimitError
+        from openai import APIConnectionError, APIStatusError, BadRequestError, RateLimitError
 
         kwargs: dict[str, Any] = {"model": model, "messages": messages, "temperature": 0}
         if tools:
@@ -176,7 +184,7 @@ class CachedLLM:
                 if "response_format" not in kwargs:
                     raise
                 kwargs.pop("response_format")
-            except RateLimitError:
+            except (RateLimitError, APIConnectionError):  # 429, timeouts, dropped connections
                 if attempt == MAX_RETRIES - 1:
                     raise
                 time.sleep(2 ** (attempt + 1))

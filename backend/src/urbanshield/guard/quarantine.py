@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 from collections.abc import Callable
 from functools import lru_cache
@@ -28,6 +29,7 @@ from urbanshield.schemas import CVE_PATTERN, Advisory
 if TYPE_CHECKING:
     from urbanshield.agents.llm import LLM
 
+log = logging.getLogger("urbanshield.quarantine")
 ADVISORIES_DIR = DATA_DIR / "advisories"
 CVSS_TOLERANCE = 0.5
 
@@ -148,7 +150,10 @@ def _contains(a: str, b: str) -> bool:
 
 
 def _same_version(a: str, b: str) -> bool:
-    """Numeric compare with missing parts as zero, so ``4.2 == 4.2.0`` (as in the Sentinel)."""
+    """Numeric compare with missing parts as zero, so ``4.2 == 4.2.0`` (as in the Sentinel).
+    A malformed version never equals anything, so it surfaces as a discrepancy."""
+    if not (re.match(_VERSION, a) and re.match(_VERSION, b)):
+        return False
     x, y = (tuple(int(p) for p in v.split(".")) for v in (a, b))
     width = max(len(x), len(y))
     return x + (0,) * (width - len(x)) == y + (0,) * (width - len(y))
@@ -172,6 +177,7 @@ def cross_check(advisory: Advisory, feed_lookup: Callable[[str], dict | None]) -
     try:
         record = feed_lookup(cve)
     except Exception as exc:  # any failure of the feed must block, not pass
+        log.warning("feed lookup for %s failed: %r", cve, exc)  # e.g. FeedIntegrityError: worth an alert
         return [f"feed lookup failed ({type(exc).__name__}); {cve} is unverified"]
     if record is None:
         return [f"{cve} is not in the pinned feed"]
