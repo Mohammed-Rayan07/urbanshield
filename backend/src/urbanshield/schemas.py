@@ -334,3 +334,8 @@ class VerifyResult(Contract):
     entries: int
     first_bad_seq: int | None = None
     reason: str | None = None
+    # Latest entry. The API remembers the highest head it has published; a later, shorter or
+    # different head means rows were cut from the end of the log (``truncated``).
+    head_seq: int | None = None
+    head_hash: str | None = None
+    truncated: bool = False

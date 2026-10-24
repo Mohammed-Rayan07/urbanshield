@@ -1,6 +1,7 @@
 // Typed client for the UrbanShield API. Every network call in the app goes through here.
 import { useEffect, useRef, useState } from 'react'
 import type {
+  AdvisoryPreset,
   AgentEvent,
   AuditEntry,
   City,
@@ -26,6 +27,11 @@ export interface Health {
   version: string
   llm_mode: 'live' | 'replay' | 'mock'
   data: 'placeholder' | 'live'
+  engine_ready: boolean
+  /** 'ephemeral' = no AUDIT_SIGNING_KEY: signatures stop verifying after a restart (show a warning). */
+  audit_key: 'fixed' | 'ephemeral'
+  /** 'ok', or 'unavailable: <reason>' (incidents are refused until it is fixed). */
+  audit: string
 }
 
 export const api = {
@@ -37,12 +43,20 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ advisory_text: advisoryText, constraints_text: constraintsText ?? null }),
     }),
+  // Demo RBAC: the approver role travels in a header (not real authentication).
   approve: (runId: string, planId: string, approve = true) =>
     request<AgentEvent>(`/runs/${runId}/approvals`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Role': 'approver' },
       body: JSON.stringify({ plan_id: planId, approve }),
     }),
+  /** Provenance for the precomputed /plans comparison. */
   toolResult: (toolCallId: string) => request<ToolResult>(`/tool-results/${toolCallId}`),
+  /** Provenance for a number in a run's timeline (tool ids restart at tc-001 in every run). */
+  runToolResult: (runId: string, toolCallId: string) =>
+    request<ToolResult>(`/runs/${runId}/tool-results/${toolCallId}`),
+  advisories: () => request<AdvisoryPreset[]>('/advisories'),
+  auditKey: () => request<{ verify_key_hex: string }>('/audit/key'),
   quarantinePreview: (advisoryText: string) =>
     request<QuarantinePreview>('/quarantine/preview', {
       method: 'POST',
