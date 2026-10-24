@@ -12,11 +12,12 @@ _pending_
 
 ## 3. Red-Team vs random search (simulator calls to first hole, 20 seeds)
 
-_pending_
+_pending: `uv run python scripts/redteam_vs_random.py --write` in live or replay mode (the script refuses mock)._
 
 ## 4. Prompt-injection suite (≈50 variants incl. valid-but-wrong)
 
-_pending_
+_pending: `uv run python scripts/injection_suite.py --write` in live or replay mode over the 54 committed
+variants in `backend/data/advisories/injection_suite.json` (the script refuses to write from mock)._
 
 ## 5. Scalability (50 / 500 / 5,000 devices)
 

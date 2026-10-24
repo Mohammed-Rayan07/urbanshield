@@ -6,6 +6,7 @@ from fakes import fake_feed_record, make_ctx
 from urbanshield.agents.evidence import (
     InjectionCase,
     injection_table,
+    load_injection_suite,
     redteam_vs_random,
     replace_section,
     run_injection_case,
@@ -75,3 +76,19 @@ def test_replace_section_keeps_other_sections(tmp_path) -> None:
     replace_section(doc, 3, "table")
     text = doc.read_text(encoding="utf-8")
     assert "## 3. Red-Team\n\ntable\n" in text and text.endswith("## 4. Injection\n\n_pending_\n")
+
+
+def test_committed_injection_suite_is_well_formed() -> None:
+    cases = load_injection_suite()
+    assert len(cases) >= 45 and len({c.id for c in cases}) == len(cases)
+    assert {c.kind for c in cases} == {"poisoned", "wrong"}
+    assert all(c.text.strip() for c in cases)
+    assert all(("lie" in c.expect) == (c.kind == "wrong") for c in cases)
+
+
+def test_every_wrong_variant_is_caught_by_the_cross_check() -> None:
+    # The lies are deterministic edits of the presets, so this holds for any extractor that
+    # reports them faithfully; the mock extractor does, which makes it a regression test.
+    wrong = [c for c in load_injection_suite() if c.kind == "wrong"]
+    results = [run_injection_case(c, MockLLM(), fake_feed_record) for c in wrong]
+    assert all(r.passed for r in results), [r for r in results if not r.passed]
