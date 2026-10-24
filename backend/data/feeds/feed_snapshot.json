@@ -1,0 +1,370 @@
+{
+  "generated": "2026-10-24",
+  "records": [
+    {
+      "cve_id": "CVE-2005-2773",
+      "cvss": 9.8,
+      "epss": 0.74592,
+      "kev": true,
+      "product": "OpenView Network Node Manager",
+      "summary": "HP OpenView Network Node Manager 6.2 through 7.50 allows remote attackers to execute arbitrary commands via shell metacharacters in the (1) node parameter to connectedNodes.ovpl, (2) cdpView.ovpl, (3) freeIPaddrs.ovpl, and (4) ecscmg.ovpl.",
+      "vendor": "Hewlett Packard (HP)"
+    },
+    {
+      "cve_id": "CVE-2011-1889",
+      "cvss": 9.8,
+      "epss": 0.4902,
+      "kev": true,
+      "product": "Forefront Threat Management Gateway (TMG)",
+      "summary": "The NSPLookupServiceNext function in the client in Microsoft Forefront Threat Management Gateway (TMG) 2010 allows remote attackers to execute arbitrary code via vectors involving unspecified requests, aka \"TMG Firewall Client Memory Corruption Vulnerability.\"",
+      "vendor": "Microsoft"
+    },
+    {
+      "cve_id": "CVE-2011-4723",
+      "cvss": 5.7,
+      "epss": 0.03064,
+      "kev": true,
+      "product": "DIR-300 Router",
+      "summary": "The D-Link DIR-300 router stores cleartext passwords, which allows context-dependent attackers to obtain sensitive information via unspecified vectors.",
+      "vendor": "D-Link"
+    },
+    {
+      "cve_id": "CVE-2013-3906",
+      "cvss": 7.8,
+      "epss": 0.84853,
+      "kev": true,
+      "product": "Graphics Component",
+      "summary": "GDI+ in Microsoft Windows Vista SP2 and Server 2008 SP2; Office 2003 SP3, 2007 SP3, and 2010 SP1 and SP2; Office Compatibility Pack SP3; and Lync 2010, 2010 Attendee, 2013, and Basic 2013 allows remote attackers to execute arbitrary code via a crafted TIFF image, as demonstrated by an image in a Word document, and exploited in the wild in October and November 2013.",
+      "vendor": "Microsoft"
+    },
+    {
+      "cve_id": "CVE-2013-5223",
+      "cvss": 5.4,
+      "epss": 0.50833,
+      "kev": true,
+      "product": "DSL-2760U",
+      "summary": "Multiple cross-site scripting (XSS) vulnerabilities in D-Link DSL-2760U Gateway (Rev. E1) allow remote authenticated users to inject arbitrary web script or HTML via the (1) ntpServer1 parameter to sntpcfg.cgi, username parameter to (2) ddnsmngr.cmd or (3) todmngr.tod, (4) TodUrlAdd parameter to urlfilter.cmd, (5) appName parameter to scprttrg.cmd, (6) fltName in an add action or (7) rmLst parameter in a remove action to scoutflt.cmd, (8) groupName parameter to portmapcfg.cmd, (9) snmpRoCommunity parameter to snmpconfig.cgi, (10) fltName parameter to scinflt.cmd, (11) PolicyName in an add action or (12) rmLst parameter in a remove action to prmngr.cmd, (13) ippName parameter to ippcfg.cmd, (14) smbNetBiosName or (15) smbDirName parameter to samba.cgi, or (16) wlSsid parameter to wlcfg.wl.",
+      "vendor": "D-Link"
+    },
+    {
+      "cve_id": "CVE-2014-0130",
+      "cvss": 7.5,
+      "epss": 0.53703,
+      "kev": true,
+      "product": "Ruby on Rails",
+      "summary": "Directory traversal vulnerability in actionpack/lib/abstract_controller/base.rb in the implicit-render implementation in Ruby on Rails before 3.2.18, 4.0.x before 4.0.5, and 4.1.x before 4.1.1, when certain route globbing configurations are enabled, allows remote attackers to read arbitrary files via a crafted request.",
+      "vendor": "Rails"
+    },
+    {
+      "cve_id": "CVE-2014-100005",
+      "cvss": 8.0,
+      "epss": 0.43456,
+      "kev": true,
+      "product": "DIR-600 Router",
+      "summary": "Multiple cross-site request forgery (CSRF) vulnerabilities in D-Link DIR-600 router (rev. Bx) with firmware before 2.17b02 allow remote attackers to hijack the authentication of administrators for requests that (1) create an administrator account or (2) enable remote management via a crafted configuration module to hedwig.cgi, (3) activate new configuration settings via a SETCFG,SAVE,ACTIVATE action to pigwidgeon.cgi, or (4) send a ping via a ping action to diagnostic.php.",
+      "vendor": "D-Link"
+    },
+    {
+      "cve_id": "CVE-2014-2120",
+      "cvss": 6.1,
+      "epss": 0.22558,
+      "kev": true,
+      "product": "Adaptive Security Appliance (ASA)",
+      "summary": "Cross-site scripting (XSS) vulnerability in the WebVPN login page in Cisco Adaptive Security Appliance (ASA) Software allows remote attackers to inject arbitrary web script or HTML via an unspecified parameter, aka Bug ID CSCun19025.",
+      "vendor": "Cisco"
+    },
+    {
+      "cve_id": "CVE-2014-3120",
+      "cvss": 8.1,
+      "epss": 0.88559,
+      "kev": true,
+      "product": "Elasticsearch",
+      "summary": "The default configuration in Elasticsearch before 1.2 enables dynamic scripting, which allows remote attackers to execute arbitrary MVEL expressions and Java code via the source parameter to _search.  NOTE: this only violates the vendor's intended security policy if the user does not run Elasticsearch in its own independent virtual machine.",
+      "vendor": "Elastic"
+    },
+    {
+      "cve_id": "CVE-2014-3931",
+      "cvss": 9.8,
+      "epss": 0.28978,
+      "kev": true,
+      "product": "Multi-Router Looking Glass (MRLG)",
+      "summary": "fastping.c in MRLG (aka Multi-Router Looking Glass) before 5.5.0 allows remote attackers to cause an arbitrary memory write and memory corruption.",
+      "vendor": "Looking Glass"
+    },
+    {
+      "cve_id": "CVE-2015-0666",
+      "cvss": 7.5,
+      "epss": 0.40379,
+      "kev": true,
+      "product": "Prime Data Center Network Manager (DCNM)",
+      "summary": "Directory traversal vulnerability in the fmserver servlet in Cisco Prime Data Center Network Manager (DCNM) before 7.1(1) allows remote attackers to read arbitrary files via a crafted pathname, aka Bug ID CSCus00241.",
+      "vendor": "Cisco"
+    },
+    {
+      "cve_id": "CVE-2015-1427",
+      "cvss": 9.8,
+      "epss": 0.99906,
+      "kev": true,
+      "product": "Elasticsearch",
+      "summary": "The Groovy scripting engine in Elasticsearch before 1.3.8 and 1.4.x before 1.4.3 allows remote attackers to bypass the sandbox protection mechanism and execute arbitrary shell commands via a crafted script.",
+      "vendor": "Elastic"
+    },
+    {
+      "cve_id": "CVE-2015-2051",
+      "cvss": 8.8,
+      "epss": 0.97101,
+      "kev": true,
+      "product": "DIR-645 Router",
+      "summary": "The D-Link DIR-645 Wired/Wireless Router Rev. Ax with firmware 1.04b12 and earlier allows remote attackers to execute arbitrary commands via a GetDeviceSettings action to the HNAP interface.",
+      "vendor": "D-Link"
+    },
+    {
+      "cve_id": "CVE-2015-2291",
+      "cvss": 7.8,
+      "epss": 0.09011,
+      "kev": true,
+      "product": "Ethernet Diagnostics Driver for Windows",
+      "summary": "(1) IQVW32.sys before 1.3.1.0 and (2) IQVW64.sys before 1.3.1.0 in the Intel Ethernet diagnostics driver for Windows allows local users to cause a denial of service or possibly execute arbitrary code with kernel privileges via a crafted (a) 0x80862013, (b) 0x8086200B, (c) 0x8086200F, or (d) 0x80862007 IOCTL call.",
+      "vendor": "Intel"
+    },
+    {
+      "cve_id": "CVE-2015-7450",
+      "cvss": 9.8,
+      "epss": 0.97764,
+      "kev": true,
+      "product": "WebSphere Application Server and Server Hypervisor Edition",
+      "summary": "Serialized-object interfaces in certain IBM analytics, business solutions, cognitive, IT infrastructure, and mobile and social products allow remote attackers to execute arbitrary commands via a crafted serialized Java object, related to the InvokerTransformer class in the Apache Commons Collections library.",
+      "vendor": "IBM"
+    },
+    {
+      "cve_id": "CVE-2016-10174",
+      "cvss": 9.8,
+      "epss": 0.83328,
+      "kev": true,
+      "product": "WNR2000v5 Router",
+      "summary": "The NETGEAR WNR2000v5 router contains a buffer overflow in the hidden_lang_avi parameter when invoking the URL /apply.cgi?/lang_check.html. This buffer overflow can be exploited by an unauthenticated attacker to achieve remote code execution.",
+      "vendor": "NETGEAR"
+    },
+    {
+      "cve_id": "CVE-2016-1555",
+      "cvss": 9.8,
+      "epss": 0.98288,
+      "kev": true,
+      "product": "Wireless Access Point (WAP) Devices",
+      "summary": "(1) boardData102.php, (2) boardData103.php, (3) boardDataJP.php, (4) boardDataNA.php, and (5) boardDataWW.php in Netgear WN604 before 3.3.3 and WN802Tv2, WNAP210v2, WNAP320, WNDAP350, WNDAP360, and WNDAP660 before 3.5.5.0 allow remote attackers to execute arbitrary commands.",
+      "vendor": "NETGEAR"
+    },
+    {
+      "cve_id": "CVE-2016-4523",
+      "cvss": 7.5,
+      "epss": 0.31167,
+      "kev": true,
+      "product": "VTScada (formerly VTS)",
+      "summary": "The WAP interface in Trihedral VTScada (formerly VTS) 8.x through 11.x before 11.2.02 allows remote attackers to cause a denial of service (out-of-bounds read and application crash) via unspecified vectors.",
+      "vendor": "Trihedral"
+    },
+    {
+      "cve_id": "CVE-2016-6277",
+      "cvss": 8.8,
+      "epss": 0.99803,
+      "kev": true,
+      "product": "Multiple Routers",
+      "summary": "NETGEAR R6250 before 1.0.4.6.Beta, R6400 before 1.0.1.18.Beta, R6700 before 1.0.1.14.Beta, R6900, R7000 before 1.0.7.6.Beta, R7100LG before 1.0.0.28.Beta, R7300DST before 1.0.0.46.Beta, R7900 before 1.0.1.8.Beta, R8000 before 1.0.3.26.Beta, D6220, D6400, D7000, and possibly other routers allow remote attackers to execute arbitrary commands via shell metacharacters in the path info to cgi-bin/.",
+      "vendor": "NETGEAR"
+    },
+    {
+      "cve_id": "CVE-2016-6366",
+      "cvss": 8.8,
+      "epss": 0.87565,
+      "kev": true,
+      "product": "Adaptive Security Appliance (ASA)",
+      "summary": "Buffer overflow in Cisco Adaptive Security Appliance (ASA) Software through 9.4.2.3 on ASA 5500, ASA 5500-X, ASA Services Module, ASA 1000V, ASAv, Firepower 9300 ASA Security Module, PIX, and FWSM devices allows remote authenticated users to execute arbitrary code via crafted IPv4 SNMP packets, aka Bug ID CSCva92151 or EXTRABACON.",
+      "vendor": "Cisco"
+    },
+    {
+      "cve_id": "CVE-2017-0001",
+      "cvss": 7.8,
+      "epss": 0.03114,
+      "kev": true,
+      "product": "Graphics Device Interface (GDI)",
+      "summary": "The Graphics Device Interface (GDI) in Microsoft Windows Vista SP2; Windows Server 2008 SP2 and R2 SP1; Windows 7 SP1; Windows 8.1; Windows Server 2012 Gold and R2; Windows RT 8.1; and Windows 10 Gold, 1511, and 1607 allows local users to gain privileges via a crafted application, aka \"Windows GDI Elevation of Privilege Vulnerability.\" This vulnerability is different from those described in CVE-2017-0005, CVE-2017-0025, and CVE-2017-0047.",
+      "vendor": "Microsoft"
+    },
+    {
+      "cve_id": "CVE-2017-0005",
+      "cvss": 7.8,
+      "epss": 0.11022,
+      "kev": true,
+      "product": "Windows",
+      "summary": "The Graphics Device Interface (GDI) in Microsoft Windows Vista SP2; Windows Server 2008 SP2 and R2 SP1; Windows 7 SP1; Windows 8.1; Windows Server 2012 Gold and R2; Windows RT 8.1; and Windows 10 Gold, 1511, and 1607 allows local users to gain privileges via a crafted application, aka \"Windows GDI Elevation of Privilege Vulnerability.\" This vulnerability is different from those described in CVE-2017-0001, CVE-2017-0025, and CVE-2017-0047.",
+      "vendor": "Microsoft"
+    },
+    {
+      "cve_id": "CVE-2017-12231",
+      "cvss": 7.5,
+      "epss": 0.0707,
+      "kev": true,
+      "product": "IOS software",
+      "summary": "A vulnerability in the implementation of Network Address Translation (NAT) functionality in Cisco IOS 12.4 through 15.6 could allow an unauthenticated, remote attacker to cause a denial of service (DoS) condition on an affected device. The vulnerability is due to the improper translation of H.323 messages that use the Registration, Admission, and Status (RAS) protocol and are sent to an affected device via IPv4 packets. An attacker could exploit this vulnerability by sending a crafted H.323 RAS packet through an affected device. A successful exploit could allow the attacker to cause the affected device to crash and reload, resulting in a DoS condition. This vulnerability affects Cisco devices that are configured to use an application layer gateway with NAT (NAT ALG) for H.323 RAS messages. By default, a NAT ALG is enabled for H.323 RAS messages. Cisco Bug IDs: CSCvc57217.",
+      "vendor": "Cisco"
+    },
+    {
+      "cve_id": "CVE-2017-12232",
+      "cvss": 6.5,
+      "epss": 0.02153,
+      "kev": true,
+      "product": "IOS software",
+      "summary": "A vulnerability in the implementation of a protocol in Cisco Integrated Services Routers Generation 2 (ISR G2) Routers running Cisco IOS 15.0 through 15.6 could allow an unauthenticated, adjacent attacker to cause an affected device to reload, resulting in a denial of service (DoS) condition. The vulnerability is due to a misclassification of Ethernet frames. An attacker could exploit this vulnerability by sending a crafted Ethernet frame to an affected device. A successful exploit could allow the attacker to cause the affected device to reload, resulting in a DoS condition. Cisco Bug IDs: CSCvc03809.",
+      "vendor": "Cisco"
+    },
+    {
+      "cve_id": "CVE-2017-12233",
+      "cvss": 7.5,
+      "epss": 0.0707,
+      "kev": true,
+      "product": "IOS software",
+      "summary": "Multiple vulnerabilities in the implementation of the Common Industrial Protocol (CIP) feature in Cisco IOS 12.4 through 15.6 could allow an unauthenticated, remote attacker to cause an affected device to reload, resulting in a denial of service (DoS) condition. The vulnerabilities are due to the improper parsing of crafted CIP packets destined to an affected device. An attacker could exploit these vulnerabilities by sending crafted CIP packets to be processed by an affected device. A successful exploit could allow the attacker to cause the affected device to reload, resulting in a DoS condition. Cisco Bug IDs: CSCuz95334.",
+      "vendor": "Cisco"
+    },
+    {
+      "cve_id": "CVE-2017-12234",
+      "cvss": 7.5,
+      "epss": 0.0707,
+      "kev": true,
+      "product": "IOS software",
+      "summary": "Multiple vulnerabilities in the implementation of the Common Industrial Protocol (CIP) feature in Cisco IOS 12.4 through 15.6 could allow an unauthenticated, remote attacker to cause an affected device to reload, resulting in a denial of service (DoS) condition. The vulnerabilities are due to the improper parsing of crafted CIP packets destined to an affected device. An attacker could exploit these vulnerabilities by sending crafted CIP packets to be processed by an affected device. A successful exploit could allow the attacker to cause the affected device to reload, resulting in a DoS condition. Cisco Bug IDs: CSCvc43709.",
+      "vendor": "Cisco"
+    },
+    {
+      "cve_id": "CVE-2017-12238",
+      "cvss": 6.5,
+      "epss": 0.02017,
+      "kev": true,
+      "product": "Catalyst 6800 Series Switches",
+      "summary": "A vulnerability in the Virtual Private LAN Service (VPLS) code of Cisco IOS 15.0 through 15.4 for Cisco Catalyst 6800 Series Switches could allow an unauthenticated, adjacent attacker to cause a C6800-16P10G or C6800-16P10G-XL type line card to crash, resulting in a denial of service (DoS) condition. The vulnerability is due to a memory management issue in the affected software. An attacker could exploit this vulnerability by creating a large number of VPLS-generated MAC entries in the MAC address table of an affected device. A successful exploit could allow the attacker to cause a C6800-16P10G or C6800-16P10G-XL type line card to crash, resulting in a DoS condition. This vulnerability affects Cisco Catalyst 6800 Series Switches that are running a vulnerable release of Cisco IOS Software and have a Cisco C6800-16P10G or C6800-16P10G-XL line card in use with Supervisor Engine 6T. To be vulnerable, the device must also be configured with VPLS and the C6800-16P10G or C6800-16P10G-XL line card needs to be the core-facing MPLS interfaces. Cisco Bug IDs: CSCva61927.",
+      "vendor": "Cisco"
+    },
+    {
+      "cve_id": "CVE-2017-12319",
+      "cvss": 5.9,
+      "epss": 0.05243,
+      "kev": true,
+      "product": "IOS XE Software",
+      "summary": "A vulnerability in the Border Gateway Protocol (BGP) over an Ethernet Virtual Private Network (EVPN) for Cisco IOS XE Software could allow an unauthenticated, remote attacker to cause the device to reload, resulting in a denial of service (DoS) condition, or potentially corrupt the BGP routing table, which could result in network instability. The vulnerability exists due to changes in the implementation of the BGP MPLS-Based Ethernet VPN RFC (RFC 7432) draft between IOS XE software releases. When the BGP Inclusive Multicast Ethernet Tag Route or BGP EVPN MAC/IP Advertisement Route update packet is received, it could be possible that the IP address length field is miscalculated. An attacker could exploit this vulnerability by sending a crafted BGP packet to an affected device after the BGP session was established. An exploit could allow the attacker to cause the affected device to reload or corrupt the BGP routing table; either outcome would result in a DoS. The vulnerability may be triggered when the router receives a crafted BGP message from a peer on an existing BGP session. This vulnerability affects all releases of Cisco IOS XE Software prior to software release 16.3 that support BGP EVPN configurations. If the device is not configured for EVPN, it is not vulnerable. Cisco Bug IDs: CSCui67191, CSCvg52875.",
+      "vendor": "Cisco"
+    },
+    {
+      "cve_id": "CVE-2017-15944",
+      "cvss": 9.8,
+      "epss": 0.9834,
+      "kev": true,
+      "product": "PAN-OS",
+      "summary": "Palo Alto Networks PAN-OS before 6.1.19, 7.0.x before 7.0.19, 7.1.x before 7.1.14, and 8.0.x before 8.0.6 allows remote attackers to execute arbitrary code via vectors involving the management interface.",
+      "vendor": "Palo Alto Networks"
+    },
+    {
+      "cve_id": "CVE-2017-18368",
+      "cvss": 9.8,
+      "epss": 0.94508,
+      "kev": true,
+      "product": "P660HN-T1A Routers",
+      "summary": "The ZyXEL P660HN-T1A v1 TCLinux Fw $7.3.15.0 v001 / 3.40(ULM.0)b31 router distributed by TrueOnline has a command injection vulnerability in the Remote System Log forwarding function, which is accessible by an unauthenticated user. The vulnerability is in the ViewLog.asp page and can be exploited through the remote_host parameter.",
+      "vendor": "Zyxel"
+    },
+    {
+      "cve_id": "CVE-2017-6077",
+      "cvss": 9.8,
+      "epss": 0.68712,
+      "kev": true,
+      "product": "Wireless Router DGN2200",
+      "summary": "ping.cgi on NETGEAR DGN2200 devices with firmware through 10.0.0.50 allows remote authenticated users to execute arbitrary OS commands via shell metacharacters in the ping_IPAddr field of an HTTP POST request.",
+      "vendor": "NETGEAR"
+    },
+    {
+      "cve_id": "CVE-2017-6327",
+      "cvss": 8.8,
+      "epss": 0.35911,
+      "kev": true,
+      "product": "Symantec Messaging Gateway",
+      "summary": "The Symantec Messaging Gateway before 10.6.3-267 can encounter an issue of remote code execution, which describes a situation whereby an individual may obtain the ability to execute commands remotely on a target machine or in a target process. In this type of occurrence, after gaining access to the system, the attacker may attempt to elevate their privileges.",
+      "vendor": "Symantec"
+    },
+    {
+      "cve_id": "CVE-2017-6334",
+      "cvss": 8.8,
+      "epss": 0.7264,
+      "kev": true,
+      "product": "DGN2200 Devices",
+      "summary": "dnslookup.cgi on NETGEAR DGN2200 devices with firmware through 10.0.0.50 allows remote authenticated users to execute arbitrary OS commands via shell metacharacters in the host_name field of an HTTP POST request, a different vulnerability than CVE-2017-6077.",
+      "vendor": "NETGEAR"
+    },
+    {
+      "cve_id": "CVE-2017-6663",
+      "cvss": 6.5,
+      "epss": 0.02117,
+      "kev": true,
+      "product": "IOS and IOS XE Software",
+      "summary": "A vulnerability in the Autonomic Networking feature of Cisco IOS Software and Cisco IOS XE Software could allow an unauthenticated, adjacent attacker to cause autonomic nodes of an affected system to reload, resulting in a denial of service (DoS) condition. More Information: CSCvd88936. Known Affected Releases: Denali-16.2.1 Denali-16.3.1.",
+      "vendor": "Cisco"
+    },
+    {
+      "cve_id": "CVE-2017-6736",
+      "cvss": 8.8,
+      "epss": 0.70354,
+      "kev": true,
+      "product": "IOS and IOS XE Software",
+      "summary": "The Simple Network Management Protocol (SNMP) subsystem of Cisco IOS and IOS XE Software contains multiple vulnerabilities that could allow an authenticated, remote attacker to remotely execute code on an affected system or cause an affected system to reload. An attacker could exploit these vulnerabilities by sending a crafted SNMP packet to an affected system via IPv4 or IPv6. Only traffic directed to an affected system can be used to exploit these vulnerabilities.\r\n\r The vulnerabilities are due to a buffer overflow condition in the SNMP subsystem of the affected software. The vulnerabilities affect all versions of SNMP - Versions 1, 2c, and 3. To exploit these vulnerabilities via SNMP Version 2c or earlier, the attacker must know the SNMP read-only community string for the affected system. To exploit these vulnerabilities via SNMP Version 3, the attacker must have user credentials for the affected system. A successful exploit could allow the attacker to execute arbitrary code and obtain full control of the affected system or cause the affected system to reload.\r\n\r Customers are advised to apply the workaround as contained in the Workarounds section below. Fixed software information is available via the Cisco IOS Software Checker. All devices that have enabled SNMP and have not explicitly excluded the affected MIBs or OIDs should be considered vulnerable.\r\n\r   There are workarounds that address these vulnerabilities.",
+      "vendor": "Cisco"
+    },
+    {
+      "cve_id": "CVE-2017-6737",
+      "cvss": 8.8,
+      "epss": 0.4524,
+      "kev": true,
+      "product": "IOS and IOS XE Software",
+      "summary": "A vulnerability in the SNMP implementation of could allow an authenticated, remote attacker to cause a reload of the affected system or to remotely execute code. An attacker could exploit this vulnerability by sending a crafted SNMP packet to the affected device.&nbsp;\r\n\r\n\r\n\r\nThe vulnerability is due to a buffer overflow in the affected code area. The vulnerability affects all versions of SNMP (versions 1, 2c, and 3). The attacker must know the SNMP read only community string (SNMP version 2c or earlier) or the user credentials (SNMPv3). An exploit could allow the attacker to execute arbitrary code and obtain full control of the system or to cause a reload of the affected system.\r\n\r\n\r\n\r\nOnly traffic directed to the affected system can be used to exploit this vulnerability.",
+      "vendor": "Cisco"
+    },
+    {
+      "cve_id": "CVE-2017-6738",
+      "cvss": 8.8,
+      "epss": 0.10855,
+      "kev": true,
+      "product": "IOS and IOS XE Software",
+      "summary": "The Simple Network Management Protocol (SNMP) subsystem of Cisco IOS and IOS XE Software contains multiple vulnerabilities that could allow an authenticated, remote attacker to remotely execute code on an affected system or cause an affected system to reload. An attacker could exploit these vulnerabilities by sending a crafted SNMP packet to an affected system via IPv4 or IPv6. Only traffic directed to an affected system can be used to exploit these vulnerabilities.\r\n\r The vulnerabilities are due to a buffer overflow condition in the SNMP subsystem of the affected software. The vulnerabilities affect all versions of SNMP - Versions 1, 2c, and 3. To exploit these vulnerabilities via SNMP Version 2c or earlier, the attacker must know the SNMP read-only community string for the affected system. To exploit these vulnerabilities via SNMP Version 3, the attacker must have user credentials for the affected system. A successful exploit could allow the attacker to execute arbitrary code and obtain full control of the affected system or cause the affected system to reload.\r\n\r Customers are advised to apply the workaround as contained in the Workarounds section below. Fixed software information is available via the Cisco IOS Software Checker. All devices that have enabled SNMP and have not explicitly excluded the affected MIBs or OIDs should be considered vulnerable.\r\n\r   There are workarounds that address these vulnerabilities.",
+      "vendor": "Cisco"
+    },
+    {
+      "cve_id": "CVE-2017-6739",
+      "cvss": 8.8,
+      "epss": 0.10855,
+      "kev": true,
+      "product": "IOS and IOS XE Software",
+      "summary": "A vulnerability in the SNMP implementation of could allow an authenticated, remote attacker to cause a reload of the affected system or to remotely execute code. An attacker could exploit this vulnerability by sending a crafted SNMP packet to the affected device.&nbsp;\r\n\r\n\r\n\r\nThe vulnerability is due to a buffer overflow in the affected code area. The vulnerability affects all versions of SNMP (versions 1, 2c, and 3). The attacker must know the SNMP read only community string (SNMP version 2c or earlier) or the user credentials (SNMPv3). An exploit could allow the attacker to execute arbitrary code and obtain full control of the system or to cause a reload of the affected system.\r\n\r\n\r\n\r\nOnly traffic directed to the affected system can be used to exploit this vulnerability.",
+      "vendor": "Cisco"
+    },
+    {
+      "cve_id": "CVE-2017-6740",
+      "cvss": 8.8,
+      "epss": 0.111,
+      "kev": true,
+      "product": "IOS and IOS XE Software",
+      "summary": "The Simple Network Management Protocol (SNMP) subsystem of Cisco IOS and IOS XE Software contains multiple vulnerabilities that could allow an authenticated, remote attacker to remotely execute code on an affected system or cause an affected system to reload. An attacker could exploit these vulnerabilities by sending a crafted SNMP packet to an affected system via IPv4 or IPv6. Only traffic directed to an affected system can be used to exploit these vulnerabilities.\r\n\r The vulnerabilities are due to a buffer overflow condition in the SNMP subsystem of the affected software. The vulnerabilities affect all versions of SNMP - Versions 1, 2c, and 3. To exploit these vulnerabilities via SNMP Version 2c or earlier, the attacker must know the SNMP read-only community string for the affected system. To exploit these vulnerabilities via SNMP Version 3, the attacker must have user credentials for the affected system. A successful exploit could allow the attacker to execute arbitrary code and obtain full control of the affected system or cause the affected system to reload.\r\n\r Customers are advised to apply the workaround as contained in the Workarounds section below. Fixed software information is available via the Cisco IOS Software Checker. All devices that have enabled SNMP and have not explicitly excluded the affected MIBs or OIDs should be considered vulnerable.\r\n\r   There are workarounds that address these vulnerabilities.",
+      "vendor": "Cisco"
+    },
+    {
+      "cve_id": "CVE-2017-6742",
+      "cvss": 8.8,
+      "epss": 0.21424,
+      "kev": true,
+      "product": "IOS and IOS XE Software",
+      "summary": "A vulnerability in the SNMP implementation of could allow an authenticated, remote attacker to cause a reload of the affected system or to remotely execute code. An attacker could exploit this vulnerability by sending a crafted SNMP packet to the affected device.&nbsp;\r\n\r\n\r\n\r\nThe vulnerability is due to a buffer overflow in the affected code area. The vulnerability affects all versions of SNMP (versions 1, 2c, and 3). The attacker must know the SNMP read only community string (SNMP version 2c or earlier) or the user credentials (SNMPv3). An exploit could allow the attacker to execute arbitrary code and obtain full control of the system or to cause a reload of the affected system.\r\n\r\n\r\n\r\nOnly traffic directed to the affected system can be used to exploit this vulnerability.",
+      "vendor": "Cisco"
+    }
+  ],
+  "sources": [
+    "cisa-kev",
+    "first-epss",
+    "nvd"
+  ]
+}
