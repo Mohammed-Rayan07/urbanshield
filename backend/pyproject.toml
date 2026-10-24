@@ -11,7 +11,6 @@ dependencies = [
     "numpy>=2.1",
     "scipy>=1.14",
     "networkx>=3.4",
-    "pulp>=2.9",
     "pynacl>=1.5",
     "openai>=1.50",
     "python-dotenv>=1.0",

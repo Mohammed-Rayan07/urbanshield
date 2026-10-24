@@ -220,7 +220,7 @@ def run_benchmark():
     fig, ax = plt.subplots(figsize=(8, 5), dpi=150)
     ax.plot(n_values, sim_times, "o-", label="Monte Carlo Sim (S=1000)", color="#2563eb", linewidth=2)
     ax.plot(n_values, greedy_times, "s-", label="Greedy Tail Heuristic", color="#10b981", linewidth=2)
-    ax.plot(n_values, milp_times, "^-", label="CVaR MILP (CBC, 30s limit)", color="#f59e0b", linewidth=2)
+    ax.plot(n_values, milp_times, "^-", label="CVaR MILP (HiGHS, 30s limit)", color="#f59e0b", linewidth=2)
 
     ax.set_xscale("log")
     ax.set_yscale("log")

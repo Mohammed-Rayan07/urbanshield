@@ -2,15 +2,17 @@
 
 Plans are optimised on a *train* scenario set (seed ``train_seed``) and scored on a
 fresh *test* set (seed ``test_seed``) by re-running the full simulator with the plan's
-controls applied, so the additive-loss approximation is checked, not trusted.
+controls applied, so the planner's additive-savings model is checked, not trusted
+(``linear_gap``).
 """
 
 from __future__ import annotations
 
 import numpy as np
 
-from urbanshield.opt.baselines import rank_and_buy
-from urbanshield.opt.common import cvar, reduction, tail_size
+from urbanshield.opt._model import option_table
+from urbanshield.opt.baselines import BASELINES, rank_and_buy
+from urbanshield.opt.common import cvar, tail_size
 from urbanshield.opt.cvar import solve
 from urbanshield.opt.greedy import greedy_tail
 from urbanshield.schemas import (
@@ -28,12 +30,22 @@ TRAIN_SEED = 1
 TEST_SEED = 2
 
 
-def _linear_cvar(city: City, losses: ScenarioLosses, plan: Plan, alpha: float) -> float:
-    scale = np.ones(len(city.devices))
-    for dev_id, kind in plan.choices.items():
-        if dev_id in losses.device_ids:
-            scale[losses.device_ids.index(dev_id)] -= reduction(city, dev_id, kind)
-    return cvar(losses.device_loss @ scale, alpha)
+def predicted_cvar(city: City, baseline: ScenarioLosses, plan: Plan, alpha: float) -> float:
+    """CVaR the planner's model predicts for ``plan`` on ``baseline`` (uncontrolled) scenarios."""
+    table = option_table(city, baseline, [])
+    column = {key: j for j, key in enumerate(table.keys)}
+    picked = [column[(d, k)] for d, k in plan.choices.items()]
+    return cvar(table.base - table.saved[:, picked].sum(axis=1), alpha)
+
+
+def _bootstrap_cvar(totals: np.ndarray, alpha: float, n_bootstrap: int, seed: int) -> np.ndarray:
+    n = totals.size
+    rng = np.random.default_rng(seed)
+    samples = totals[rng.integers(0, n, size=(n_bootstrap, n))]
+    k = tail_size(n, alpha)
+    if k >= n:
+        return samples.mean(axis=1)
+    return np.partition(samples, n - k, axis=1)[:, -k:].mean(axis=1)
 
 
 def evaluate_plan(
@@ -43,42 +55,27 @@ def evaluate_plan(
     n_scenarios: int = 2000,
     seed: int = TEST_SEED,
     n_bootstrap: int = 500,
+    baseline: ScenarioLosses | None = None,
 ) -> PlanMetrics:
     """Simulate with ``plan.choices`` applied; return CVaR, mean, max cascade, bootstrap
-    95% CI on CVaR, and the linear-vs-simulated gap."""
-    sim_losses = montecarlo.simulate(city, n_scenarios=n_scenarios, seed=seed, controls=plan.choices)
-    simulated_totals = sim_losses.total
+    95% CI on CVaR, and the predicted-vs-simulated gap. ``baseline`` is the uncontrolled
+    run on the same seed, if the caller already has it (``compare`` shares one)."""
+    simulated = montecarlo.simulate(city, n_scenarios=n_scenarios, seed=seed, controls=plan.choices)
+    totals = simulated.total
+    cvar_sim = cvar(totals, alpha)
+    boot = _bootstrap_cvar(totals, alpha, n_bootstrap, seed)
 
-    cvar_sim = cvar(simulated_totals, alpha)
-    mean_loss = float(np.mean(simulated_totals))
-    max_cascade = int(sim_losses.compromised.sum(axis=1).max()) if sim_losses.compromised.size > 0 else 0
-
-    # Bootstrap 95% CI on CVaR (500x)
-    rng = np.random.default_rng(seed)
-    boot_indices = rng.choice(n_scenarios, size=(n_bootstrap, n_scenarios), replace=True)
-    boot_samples = simulated_totals[boot_indices]
-    k_tail = tail_size(n_scenarios, alpha)
-    if k_tail >= n_scenarios:
-        boot_cvars = boot_samples.mean(axis=1)
-    else:
-        part = np.partition(boot_samples, n_scenarios - k_tail, axis=1)
-        boot_cvars = part[:, -k_tail:].mean(axis=1)
-
-    ci_low = float(min(np.percentile(boot_cvars, 2.5), cvar_sim))
-    ci_high = float(max(np.percentile(boot_cvars, 97.5), cvar_sim))
-
-    # Linear-vs-simulated gap on test set: (MILP-predicted cvar - simulated cvar) / simulated cvar
-    uncontrolled_losses = montecarlo.simulate(city, n_scenarios=n_scenarios, seed=seed, controls=None)
-    pred_cvar = _linear_cvar(city, uncontrolled_losses, plan, alpha)
-    linear_gap = float((pred_cvar - cvar_sim) / cvar_sim) if cvar_sim > 0 else 0.0
+    if baseline is None:
+        baseline = montecarlo.simulate(city, n_scenarios=n_scenarios, seed=seed)
+    predicted = predicted_cvar(city, baseline, plan, alpha)
 
     return PlanMetrics(
         cvar=cvar_sim,
-        mean_loss=mean_loss,
-        max_cascade=max_cascade,
-        ci_low=ci_low,
-        ci_high=ci_high,
-        linear_gap=linear_gap,
+        mean_loss=float(totals.mean()),
+        max_cascade=int(simulated.compromised.sum(axis=1).max()) if simulated.compromised.size else 0,
+        ci_low=float(min(np.percentile(boot, 2.5), cvar_sim)),
+        ci_high=float(max(np.percentile(boot, 97.5), cvar_sim)),
+        linear_gap=float((predicted - cvar_sim) / cvar_sim) if cvar_sim > 0 else 0.0,
         split="test",
     )
 
@@ -91,44 +88,23 @@ def compare(
 ) -> list[Plan]:
     """Every objective (CVaR, both ablations, greedy tail, all baselines) under the same
     budget and constraints, each with test-set ``metrics`` filled in, CVaR plan first."""
-    train_losses = montecarlo.simulate(city, n_scenarios=n_scenarios, seed=TRAIN_SEED)
-
-    # 1. UrbanShield CVaR MILP
-    cvar_plan = solve(city, train_losses, budget, constraints, objective=Objective.CVAR)
-
-    # 2. Ablations
-    mean_plan = solve(city, train_losses, budget, constraints, objective=Objective.MEAN)
-    patch_only_plan = solve(city, train_losses, budget, constraints, objective=Objective.PATCH_ONLY)
-
-    # 3. Greedy tail
-    greedy_plan = greedy_tail(city, train_losses, budget, constraints)
-
-    # 4. Baselines
-    cvss_plan = rank_and_buy(city, train_losses, budget, Objective.CVSS, constraints)
-    cvss_kev_epss_plan = rank_and_buy(city, train_losses, budget, Objective.CVSS_KEV_EPSS, constraints)
-    loss_per_inr_plan = rank_and_buy(city, train_losses, budget, Objective.LOSS_PER_INR, constraints)
-    bfs_plan = rank_and_buy(city, train_losses, budget, Objective.BFS_CENTRALITY, constraints)
-
-    raw_plans = [
-        cvar_plan,
-        mean_plan,
-        patch_only_plan,
-        greedy_plan,
-        cvss_plan,
-        cvss_kev_epss_plan,
-        loss_per_inr_plan,
-        bfs_plan,
+    constraints = list(constraints or [])
+    train = montecarlo.simulate(city, n_scenarios=n_scenarios, seed=TRAIN_SEED)
+    plans = [
+        solve(city, train, budget, constraints, objective=Objective.CVAR),
+        solve(city, train, budget, constraints, objective=Objective.MEAN),
+        solve(city, train, budget, constraints, objective=Objective.PATCH_ONLY),
+        greedy_tail(city, train, budget, constraints),
+        *(rank_and_buy(city, train, budget, o, constraints) for o in BASELINES),
     ]
-
-    evaluated_plans: list[Plan] = []
-    for plan in raw_plans:
-        metrics = evaluate_plan(
-            city,
-            plan,
-            alpha=budget.alpha,
-            n_scenarios=n_scenarios,
-            seed=TEST_SEED,
+    test = montecarlo.simulate(city, n_scenarios=n_scenarios, seed=TEST_SEED)
+    return [
+        p.model_copy(
+            update={
+                "metrics": evaluate_plan(
+                    city, p, budget.alpha, n_scenarios=n_scenarios, seed=TEST_SEED, baseline=test
+                )
+            }
         )
-        evaluated_plans.append(plan.model_copy(update={"metrics": metrics}))
-
-    return evaluated_plans
+        for p in plans
+    ]

@@ -21,7 +21,7 @@ Most teams will ship a glossy dashboard wrapped around a chatbot, with numbers n
 |---|---|---|
 | Who can reach whom | BFS on reachability graph | — |
 | How damage spreads | cascade on dependency graph | — |
-| Best fixes under budget | CVaR MILP (PuLP/CBC) | — |
+| Best fixes under budget | CVaR MILP (SciPy/HiGHS) | — |
 | Messy advisory text → affected devices | ✗ (aliases, version ranges) | **Sentinel** |
 | Compromise alert → real? blast radius? contain what? | ✗ | **Analyst** |
 | Plain-language ops constraints → MILP rows | ✗ | **Planner** |
@@ -65,7 +65,7 @@ Data is synthetic devices placed on real streets, seeded with real CVE / CISA-KE
    └─ SQLite: devices, edges, scenarios, plans, events, audit_log
 ```
 
-**Stack (unchanged from proposal, trimmed):** Python 3.12, NumPy, SciPy sparse, NetworkX (graph build only), PuLP+CBC, FastAPI, Pydantic v2, SQLite, PyNaCl, OpenAI Python SDK (pointed at any compatible endpoint) · React (Vite), Tailwind, Leaflet, Recharts. **No LangChain, no Kafka, no Kubernetes, no vector DB.**
+**Stack (unchanged from proposal, trimmed):** Python 3.12, NumPy, SciPy sparse, NetworkX (graph build only), SciPy (HiGHS MILP), FastAPI, Pydantic v2, SQLite, PyNaCl, OpenAI Python SDK (pointed at any compatible endpoint) · React (Vite), Tailwind, Leaflet, Recharts. **No LangChain, no Kafka, no Kubernetes, no vector DB.**
 
 **Models:** a fast model for Sentinel extraction, a strong model for Planner/Red-Team, set in `.env`. OmniRush tokens power the team's *coding agents*; the app's runtime agents need one OpenAI-compatible key for live recording, and run in `mock`/`replay` otherwise.
 
@@ -253,7 +253,7 @@ Drill answers: *Why not BFS?* §1 · *LLM wrong?* It can't emit numbers; Auditor
 | e2e | `webapp-testing` skill (Playwright click-through of Flow A and B) |
 | Docs / slides | `ecc:update-docs`, `pptx` skill or a Slides artifact |
 
-Ignore the Vercel plugin's nudges toward Next.js/marketplace; the backend is Python (PuLP/CBC). Deploying is optional (P2): frontend on Vercel, API on Render/Fly. The demo runs locally.
+Ignore the Vercel plugin's nudges toward Next.js/marketplace; the backend is Python (SciPy/HiGHS). Deploying is optional (P2): frontend on Vercel, API on Render/Fly. The demo runs locally.
 
 ---
 

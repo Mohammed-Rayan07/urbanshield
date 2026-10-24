@@ -1,23 +1,29 @@
 """CVaR-minimising remediation plan as a MILP (Rockafellar-Uryasev). Owner: B.
 
-    minimise   t + 1 / ((1 - alpha) * S) * sum_s z_s
-    subject to z_s >= L_s(x) - t,  z_s >= 0
-               sum c_ik x_ik <= Budget,  sum d_ik x_ik <= Window,  sum_k x_ik <= 1
-               + constraints (zones, must-fix, forbidden controls)
+    minimise   t + 1 / k * sum_s z_s                    (k = tail_size(S, alpha))
+    subject to z_s >= L_s(x) - t,  z_s >= 0,  t >= 0
+               L_s(x) = base_s - sum_j saved[s, j] * x_j
+               sum c_j x_j <= Budget,  sum d_j x_j <= Window,  sum_{j of device i} x_j <= 1
+               + constraints (zones, must-fix, forbidden controls; see ``_model``)
 
-Solve with PuLP + CBC. Warm-start from ``greedy_tail``; if CBC exceeds
-``time_limit_s``, return the greedy plan with ``solver=Solver.GREEDY`` (the UI shows
-which solver ran). ``objective=MEAN`` minimises expected loss with the same
-constraints (ablation). ``patch_only=True`` restricts to PATCH (ablation).
+Solved with HiGHS through ``scipy.optimize.milp`` (bundled with SciPy: no external solver
+binary). Scenarios with zero loss can never be in the tail, so they get no ``z`` variable.
+If HiGHS hits ``time_limit_s`` it returns its best incumbent (``solver=Solver.MILP``); if it
+has none, the greedy plan is returned with ``solver=Solver.GREEDY`` (the UI shows which
+solver ran). ``objective=MEAN`` minimises expected loss with the same constraints
+(ablation); ``objective=PATCH_ONLY`` is CVaR restricted to PATCH (ablation).
 """
 
-import hashlib
+from __future__ import annotations
+
 import time
 
 import numpy as np
-import pulp
+from scipy import sparse
+from scipy.optimize import Bounds, LinearConstraint, milp
 
-from urbanshield.opt.common import reduction, tail_size
+from urbanshield.opt._model import OptionTable, effective_budget, must_fix, option_table, plan_id
+from urbanshield.opt.common import tail_size
 from urbanshield.opt.greedy import greedy_tail
 from urbanshield.schemas import (
     Budget,
@@ -31,15 +37,7 @@ from urbanshield.schemas import (
     Solver,
 )
 
-
-def _make_plan_id(objective: Objective, choices: dict[str, ControlKind]) -> str:
-    sorted_items = sorted(
-        (dev_id, kind.value if hasattr(kind, "value") else str(kind)) for dev_id, kind in choices.items()
-    )
-    repr_str = ",".join(f"{k}:{v}" for k, v in sorted_items)
-    h = hashlib.sha256(repr_str.encode()).hexdigest()[:8]
-    obj_str = objective.value if hasattr(objective, "value") else str(objective)
-    return f"plan-{obj_str}-{h}"
+MIP_REL_GAP = 1e-6
 
 
 def solve(
@@ -53,162 +51,98 @@ def solve(
     """Return the optimal (or fallback) plan. ``objective`` is CVAR, MEAN or PATCH_ONLY."""
     t0 = time.perf_counter()
     constraints = list(constraints or [])
+    limits = effective_budget(budget, constraints)
+    patch_only = objective == Objective.PATCH_ONLY
+    table = option_table(city, losses, constraints, patch_only=patch_only)
+    m = table.size
 
-    no_downtime_zones = {
-        str(c.params["zone"])
-        for c in constraints
-        if c.kind == ConstraintKind.NO_DOWNTIME_ZONE and "zone" in c.params
-    }
-    forbidden_kinds = {
-        c.params["kind"].value if hasattr(c.params["kind"], "value") else str(c.params["kind"])
-        for c in constraints
-        if c.kind == ConstraintKind.FORBID_CONTROL and "kind" in c.params
-    }
-    must_fix_ids = [
-        str(c.params["device_id"])
-        for c in constraints
-        if c.kind == ConstraintKind.MUST_FIX and "device_id" in c.params
+    # Rows shared by both objectives, over the x block only.
+    one_per_device = sparse.csr_matrix(
+        (np.ones(m), (table.device, np.arange(m))), shape=(len(city.devices), m)
+    )
+    rows = [
+        LinearConstraint(table.cost[None, :], -np.inf, limits.inr),
+        LinearConstraint(table.downtime[None, :], -np.inf, limits.downtime_h),
+        LinearConstraint(one_per_device, -np.inf, 1.0),
+    ]
+    index = {d.id: i for i, d in enumerate(city.devices)}
+    for device_id in must_fix(constraints):
+        if device_id not in index:
+            continue  # an unknown device can't be fixed; the plan is checked by is_feasible
+        rows.append(LinearConstraint(one_per_device[index[device_id]], 1.0, np.inf))
+
+    if objective == Objective.MEAN:
+        c = -table.saved.mean(axis=0)
+        n_extra = 0
+    else:
+        k = tail_size(losses.n_scenarios, limits.alpha)
+        tail_rows = np.flatnonzero(table.base > 0)
+        n_z = len(tail_rows)
+        n_extra = 1 + n_z
+        c = np.concatenate([np.zeros(m), [1.0], np.full(n_z, 1.0 / k)])
+        # z_s + t + sum_j saved[s, j] x_j >= base_s
+        tail = sparse.hstack(
+            [
+                sparse.csr_matrix(table.saved[tail_rows]),
+                sparse.csr_matrix(np.ones((n_z, 1))),
+                sparse.identity(n_z, format="csr"),
+            ],
+            format="csr",
+        )
+        rows = [_pad(r, n_extra) for r in rows]
+        rows.append(LinearConstraint(tail, table.base[tail_rows], np.inf))
+
+    integrality = np.concatenate([np.ones(m), np.zeros(n_extra)])
+    upper = np.concatenate([np.ones(m), np.full(n_extra, np.inf)])
+    result = milp(
+        c,
+        constraints=rows,
+        integrality=integrality,
+        bounds=Bounds(np.zeros(m + n_extra), upper),
+        options={"time_limit": time_limit_s, "mip_rel_gap": MIP_REL_GAP, "disp": False},
+    )
+
+    if result.x is None:  # infeasible, or no incumbent before the time limit
+        fallback = greedy_tail(city, losses, budget, _greedy_constraints(constraints, patch_only))
+        return _plan(city, objective, fallback.choices, table, Solver.GREEDY, t0)
+    chosen = np.flatnonzero(result.x[:m] > 0.5)
+    choices = {table.keys[j][0]: table.keys[j][1] for j in chosen}
+    return _plan(city, objective, choices, table, Solver.MILP, t0)
+
+
+def _pad(row: LinearConstraint, n_extra: int) -> LinearConstraint:
+    """Widen a constraint over the x block with zero columns for ``t`` and ``z``."""
+    a = sparse.hstack([sparse.csr_matrix(row.A), sparse.csr_matrix((row.A.shape[0], n_extra))])
+    return LinearConstraint(a.tocsr(), row.lb, row.ub)
+
+
+def _greedy_constraints(constraints: list[Constraint], patch_only: bool) -> list[Constraint]:
+    if not patch_only:
+        return constraints
+    return constraints + [
+        Constraint(kind=ConstraintKind.FORBID_CONTROL, params={"kind": k.value})
+        for k in ControlKind
+        if k != ControlKind.PATCH
     ]
 
-    # Warm-start using greedy heuristic
-    greedy_constraints = list(constraints)
-    if objective == Objective.PATCH_ONLY:
-        for k in ControlKind:
-            if k != ControlKind.PATCH:
-                greedy_constraints.append(Constraint(kind=ConstraintKind.FORBID_CONTROL, params={"kind": k}))
-    greedy_plan = greedy_tail(city, losses, budget, greedy_constraints)
 
-    prob = pulp.LpProblem("urbanshield_remediation", pulp.LpMinimize)
-
-    # Decision variables x_{i, k} in {0, 1}
-    x_vars: dict[tuple[str, ControlKind], pulp.LpVariable] = {}
-    saved_loss: dict[tuple[str, ControlKind], np.ndarray] = {}
-    cost_map: dict[tuple[str, ControlKind], int] = {}
-    dt_map: dict[tuple[str, ControlKind], float] = {}
-
-    dev_idx_map = {did: idx for idx, did in enumerate(losses.device_ids)}
-
-    for dev in city.devices:
-        for opt in dev.controls:
-            if objective == Objective.PATCH_ONLY and opt.kind != ControlKind.PATCH:
-                continue
-            kind_str = opt.kind.value if hasattr(opt.kind, "value") else str(opt.kind)
-            if kind_str in forbidden_kinds:
-                continue
-            if dev.zone in no_downtime_zones and opt.downtime_h > 0:
-                continue
-
-            var_name = f"x_{dev.id}_{kind_str}"
-            var = pulp.LpVariable(var_name, cat=pulp.LpBinary)
-
-            # Set warm-start value from greedy
-            if greedy_plan.choices.get(dev.id) == opt.kind:
-                var.setInitialValue(1)
-            else:
-                var.setInitialValue(0)
-
-            x_vars[(dev.id, opt.kind)] = var
-            cost_map[(dev.id, opt.kind)] = opt.cost_inr
-            dt_map[(dev.id, opt.kind)] = float(opt.downtime_h)
-
-            col = dev_idx_map.get(dev.id)
-            if col is not None:
-                r = reduction(city, dev.id, opt.kind)
-                saved_loss[(dev.id, opt.kind)] = losses.device_loss[:, col] * r
-            else:
-                saved_loss[(dev.id, opt.kind)] = np.zeros(losses.n_scenarios, dtype=float)
-
-    # Constraint: at most one option per device
-    for dev in city.devices:
-        dev_vars = [var for (d_id, _), var in x_vars.items() if d_id == dev.id]
-        if dev_vars:
-            prob += pulp.lpSum(dev_vars) <= 1, f"one_control_{dev.id}"
-
-    # Constraint: MUST_FIX
-    for must_id in must_fix_ids:
-        must_vars = [var for (d_id, _), var in x_vars.items() if d_id == must_id]
-        if must_vars:
-            prob += pulp.lpSum(must_vars) >= 1, f"must_fix_{must_id}"
-
-    # Constraint: budget (INR)
-    prob += (
-        pulp.lpSum(cost_map[key] * var for key, var in x_vars.items()) <= budget.inr,
-        "budget_inr",
+def _plan(
+    city: City,
+    objective: Objective,
+    choices: dict[str, ControlKind],
+    table: OptionTable,
+    solver: Solver,
+    t0: float,
+) -> Plan:
+    option = {(d.id, o.kind): o for d in city.devices for o in d.controls}
+    picked = [option[(d, k)] for d, k in choices.items()]
+    return Plan(
+        id=plan_id(objective, choices),
+        city_id=city.id,
+        objective=objective,
+        choices=choices,
+        cost_inr=sum(o.cost_inr for o in picked),
+        downtime_h=float(sum(o.downtime_h for o in picked)),
+        solver=solver,
+        solve_ms=int((time.perf_counter() - t0) * 1000),
     )
-
-    # Constraint: downtime (hours)
-    prob += (
-        pulp.lpSum(dt_map[key] * var for key, var in x_vars.items()) <= budget.downtime_h,
-        "budget_downtime",
-    )
-
-    # Objective formulation
-    n_scen = losses.n_scenarios
-    if objective == Objective.MEAN:
-        # Minimise expected loss: sum_s L_s(x) / S
-        # Constant sum_s base_loss[s] omitted; minimise - sum_{i,k} (mean_saved_{i,k} * x_{i,k})
-        mean_saved = {key: float(np.mean(saved_loss[key])) for key in x_vars}
-        prob += (
-            pulp.lpSum(-mean_saved[key] * var for key, var in x_vars.items()),
-            "mean_loss_objective",
-        )
-    else:
-        # CVaR (or PATCH_ONLY CVaR)
-        k_tail = tail_size(n_scen, budget.alpha)
-        t_var = pulp.LpVariable("t", cat=pulp.LpContinuous)
-        z_vars = [pulp.LpVariable(f"z_{s}", lowBound=0, cat=pulp.LpContinuous) for s in range(n_scen)]
-
-        prob += t_var + (1.0 / k_tail) * pulp.lpSum(z_vars), "cvar_objective"
-
-        # z_s >= L_s(x) - t <=> z_s + t + sum_{i,k} saved_{i,k}[s] * x_{i,k} >= base_loss[s]
-        base_losses = losses.total
-        for s in range(n_scen):
-            scen_terms = [
-                saved_loss[key][s] * var for key, var in x_vars.items() if saved_loss[key][s] > 1e-9
-            ]
-            prob += (
-                z_vars[s] + t_var + pulp.lpSum(scen_terms) >= float(base_losses[s]),
-                f"cvar_tail_{s}",
-            )
-
-    solver = pulp.PULP_CBC_CMD(msg=False, timeLimit=time_limit_s, warmStart=True)
-    status = prob.solve(solver)
-
-    # Check status and extract solution
-    is_optimal = status == pulp.constants.LpStatusOptimal or status == 1
-    has_incumbent = any(var.varValue is not None and var.varValue > 0.5 for var in x_vars.values())
-
-    if is_optimal or has_incumbent:
-        choices = {}
-        total_cost = 0
-        total_dt = 0.0
-        for (dev_id, kind), var in x_vars.items():
-            if var.varValue is not None and var.varValue > 0.5:
-                choices[dev_id] = kind
-                total_cost += cost_map[(dev_id, kind)]
-                total_dt += dt_map[(dev_id, kind)]
-
-        solve_ms = int((time.perf_counter() - t0) * 1000)
-        return Plan(
-            id=_make_plan_id(objective, choices),
-            city_id=city.id,
-            objective=objective,
-            choices=choices,
-            cost_inr=total_cost,
-            downtime_h=float(total_dt),
-            solver=Solver.MILP,
-            solve_ms=solve_ms,
-        )
-    else:
-        # Fallback to greedy
-        solve_ms = int((time.perf_counter() - t0) * 1000)
-        return Plan(
-            id=_make_plan_id(objective, greedy_plan.choices),
-            city_id=city.id,
-            objective=objective,
-            choices=greedy_plan.choices,
-            cost_inr=greedy_plan.cost_inr,
-            downtime_h=greedy_plan.downtime_h,
-            solver=Solver.GREEDY,
-            solve_ms=solve_ms,
-        )

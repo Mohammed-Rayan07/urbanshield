@@ -50,7 +50,7 @@ backend/src/urbanshield/
   schemas.py   data contracts shared by every module
   city/        city twin on Mangaluru streets, attack + dependency graphs, pinned CVE/KEV/EPSS feed
   sim/         vectorised Monte Carlo with correlated campaigns
-  opt/         CVaR MILP (PuLP/CBC), baselines, ablations, held-out evaluation
+  opt/         CVaR MILP (SciPy/HiGHS), baselines, ablations, held-out evaluation
   agents/      Sentinel, Analyst, Planner, Red-Team, orchestrator, provider-agnostic LLM adapter
   guard/       quarantine, tool allowlists, Auditor, hash-chained audit log
   api/         FastAPI + Server-Sent Events

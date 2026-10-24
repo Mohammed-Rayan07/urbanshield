@@ -52,7 +52,8 @@ pick the largest CVaR drop per rupee (vectorise: precompute `device_loss * r` co
 improves. **Done when:** the greedy feasibility case passes.
 
 ### B4 · CVaR MILP (target: h8) ★ the core
-`opt/cvar.py:solve` with PuLP + CBC, exactly the formulation in the docstring.
+`opt/cvar.py:solve` with HiGHS via `scipy.optimize.milp` (ported from PuLP + CBC at integration: PuLP 4
+ships no CBC binary), exactly the formulation in the docstring.
 - Variables: binary `x[i,k]` for each device's listed options, continuous `t`, `z[s] ≥ 0`.
 - `L_s(x) = Σ_i loss[s,i] − Σ_i Σ_k loss[s,i]·r_ik·x_ik` (linear, because loss is data).
 - Constraints: budget, downtime, ≤1 option per device, NO_DOWNTIME_ZONE (x=0 for options with downtime
