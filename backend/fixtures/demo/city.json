@@ -1,0 +1,2617 @@
+{
+ "id": "mangaluru-demo",
+ "name": "Mangaluru (demo twin)",
+ "seed": 7,
+ "devices": [
+  {
+   "id": "d-001",
+   "name": "Streetlight KOT-01",
+   "category": "streetlight",
+   "zone": "Kottara",
+   "lat": 12.91575,
+   "lon": 74.8359,
+   "firmware": "lumenos/4.1.3",
+   "vulns": [
+    {
+     "cve_id": "CVE-2025-31337",
+     "cvss": 6.1,
+     "epss": 0.42,
+     "kev": true
+    }
+   ],
+   "exposed": true,
+   "criticality": 0.3,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 47710,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 18911,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-002",
+   "name": "Streetlight SUR-02",
+   "category": "streetlight",
+   "zone": "Surathkal",
+   "lat": 13.02063,
+   "lon": 74.78859,
+   "firmware": "lumenos/4.1.3",
+   "vulns": [
+    {
+     "cve_id": "CVE-2025-31337",
+     "cvss": 6.1,
+     "epss": 0.42,
+     "kev": true
+    }
+   ],
+   "exposed": true,
+   "criticality": 0.3,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 38036,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 12665,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-003",
+   "name": "Streetlight HAM-03",
+   "category": "streetlight",
+   "zone": "Hampankatta",
+   "lat": 12.85922,
+   "lon": 74.84431,
+   "firmware": "lumenos/4.1.3",
+   "vulns": [
+    {
+     "cve_id": "CVE-2025-31337",
+     "cvss": 6.1,
+     "epss": 0.42,
+     "kev": true
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.3,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 41850,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 23450,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-004",
+   "name": "Streetlight PAN-04",
+   "category": "streetlight",
+   "zone": "Panambur",
+   "lat": 12.93102,
+   "lon": 74.81617,
+   "firmware": "lumenos/4.1.3",
+   "vulns": [
+    {
+     "cve_id": "CVE-2025-31337",
+     "cvss": 6.1,
+     "epss": 0.42,
+     "kev": true
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.3,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 40976,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 15638,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 25903,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-005",
+   "name": "Streetlight PAN-05",
+   "category": "streetlight",
+   "zone": "Panambur",
+   "lat": 12.93237,
+   "lon": 74.81042,
+   "firmware": "lumenos/4.1.3",
+   "vulns": [
+    {
+     "cve_id": "CVE-2025-31337",
+     "cvss": 6.1,
+     "epss": 0.42,
+     "kev": true
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.3,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 30338,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 2254,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-006",
+   "name": "Streetlight SUR-06",
+   "category": "streetlight",
+   "zone": "Surathkal",
+   "lat": 13.01366,
+   "lon": 74.79423,
+   "firmware": "lumenos/4.1.3",
+   "vulns": [
+    {
+     "cve_id": "CVE-2025-31337",
+     "cvss": 6.1,
+     "epss": 0.42,
+     "kev": true
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.3,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 42053,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 14578,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 4399,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 2353,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-007",
+   "name": "Streetlight PAN-07",
+   "category": "streetlight",
+   "zone": "Panambur",
+   "lat": 12.93186,
+   "lon": 74.805,
+   "firmware": "lumenos/4.1.3",
+   "vulns": [
+    {
+     "cve_id": "CVE-2025-31337",
+     "cvss": 6.1,
+     "epss": 0.42,
+     "kev": true
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.3,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 38772,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 2130,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 11158,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-008",
+   "name": "Streetlight HAM-08",
+   "category": "streetlight",
+   "zone": "Hampankatta",
+   "lat": 12.86176,
+   "lon": 74.83984,
+   "firmware": "lumenos/4.1.3",
+   "vulns": [
+    {
+     "cve_id": "CVE-2025-31337",
+     "cvss": 6.1,
+     "epss": 0.42,
+     "kev": true
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.3,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 51088,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 11198,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 25871,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-009",
+   "name": "Streetlight KOT-09",
+   "category": "streetlight",
+   "zone": "Kottara",
+   "lat": 12.90116,
+   "lon": 74.835,
+   "firmware": "lumenos/4.1.3",
+   "vulns": [
+    {
+     "cve_id": "CVE-2025-31337",
+     "cvss": 6.1,
+     "epss": 0.42,
+     "kev": true
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.3,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 48159,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 19002,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 24611,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-010",
+   "name": "Streetlight SUR-10",
+   "category": "streetlight",
+   "zone": "Surathkal",
+   "lat": 13.00026,
+   "lon": 74.79833,
+   "firmware": "lumenos/4.1.3",
+   "vulns": [
+    {
+     "cve_id": "CVE-2025-31337",
+     "cvss": 6.1,
+     "epss": 0.42,
+     "kev": true
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.3,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 49288,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 13623,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 6321,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 1826,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-011",
+   "name": "Streetlight SUR-11",
+   "category": "streetlight",
+   "zone": "Surathkal",
+   "lat": 13.01065,
+   "lon": 74.78866,
+   "firmware": "lumenos/4.1.3",
+   "vulns": [
+    {
+     "cve_id": "CVE-2025-31337",
+     "cvss": 6.1,
+     "epss": 0.42,
+     "kev": true
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.3,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 33942,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 4672,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 2445,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-012",
+   "name": "Streetlight SUR-12",
+   "category": "streetlight",
+   "zone": "Surathkal",
+   "lat": 13.00279,
+   "lon": 74.79233,
+   "firmware": "lumenos/4.1.3",
+   "vulns": [
+    {
+     "cve_id": "CVE-2025-31337",
+     "cvss": 6.1,
+     "epss": 0.42,
+     "kev": true
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.3,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 48735,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 4335,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 14237,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-013",
+   "name": "Ev Charger KOT-13",
+   "category": "ev_charger",
+   "zone": "Kottara",
+   "lat": 12.90161,
+   "lon": 74.84568,
+   "firmware": "voltgrid/2.0.1",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-48201",
+     "cvss": 5.4,
+     "epss": 0.18,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.5,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 29991,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 3953,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-014",
+   "name": "Signal SUR-14",
+   "category": "signal",
+   "zone": "Surathkal",
+   "lat": 13.0146,
+   "lon": 74.78454,
+   "firmware": "trafikon/7.2.0",
+   "vulns": [
+    {
+     "cve_id": "CVE-2023-29910",
+     "cvss": 4.3,
+     "epss": 0.05,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.95,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 28098,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 4756,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 13823,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 2079,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    }
+   ],
+   "tags": [
+    "ambulance_corridor"
+   ]
+  },
+  {
+   "id": "d-015",
+   "name": "Signal PAN-15",
+   "category": "signal",
+   "zone": "Panambur",
+   "lat": 12.95277,
+   "lon": 74.81281,
+   "firmware": "trafikon/7.2.0",
+   "vulns": [
+    {
+     "cve_id": "CVE-2023-29910",
+     "cvss": 4.3,
+     "epss": 0.05,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.95,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 37553,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 23411,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 4944,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 1880,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    }
+   ],
+   "tags": [
+    "ambulance_corridor"
+   ]
+  },
+  {
+   "id": "d-016",
+   "name": "Signal KOT-16",
+   "category": "signal",
+   "zone": "Kottara",
+   "lat": 12.89757,
+   "lon": 74.84769,
+   "firmware": "trafikon/7.2.0",
+   "vulns": [
+    {
+     "cve_id": "CVE-2023-29910",
+     "cvss": 4.3,
+     "epss": 0.05,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.95,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 36161,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 3657,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 17503,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": [
+    "ambulance_corridor"
+   ]
+  },
+  {
+   "id": "d-017",
+   "name": "Signal HAM-17",
+   "category": "signal",
+   "zone": "Hampankatta",
+   "lat": 12.86143,
+   "lon": 74.83503,
+   "firmware": "trafikon/7.2.0",
+   "vulns": [
+    {
+     "cve_id": "CVE-2023-29910",
+     "cvss": 4.3,
+     "epss": 0.05,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.95,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 48983,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 26711,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 11836,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": [
+    "ambulance_corridor"
+   ]
+  },
+  {
+   "id": "d-018",
+   "name": "Signal HAM-18",
+   "category": "signal",
+   "zone": "Hampankatta",
+   "lat": 12.86385,
+   "lon": 74.83995,
+   "firmware": "trafikon/7.2.0",
+   "vulns": [
+    {
+     "cve_id": "CVE-2023-29910",
+     "cvss": 4.3,
+     "epss": 0.05,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.95,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 30768,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 14892,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 32167,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": [
+    "ambulance_corridor"
+   ]
+  },
+  {
+   "id": "d-019",
+   "name": "Streetlight HAM-19",
+   "category": "streetlight",
+   "zone": "Hampankatta",
+   "lat": 12.86933,
+   "lon": 74.83924,
+   "firmware": "decorlite/1.0.0",
+   "vulns": [
+    {
+     "cve_id": "CVE-2025-10000",
+     "cvss": 9.8,
+     "epss": 0.02,
+     "kev": false
+    }
+   ],
+   "exposed": true,
+   "criticality": 0.1,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 45992,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 28605,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": [
+    "decorative"
+   ]
+  },
+  {
+   "id": "d-020",
+   "name": "Streetlight HAM-20",
+   "category": "streetlight",
+   "zone": "Hampankatta",
+   "lat": 12.86929,
+   "lon": 74.84684,
+   "firmware": "decorlite/1.0.0",
+   "vulns": [
+    {
+     "cve_id": "CVE-2025-10001",
+     "cvss": 9.8,
+     "epss": 0.02,
+     "kev": false
+    }
+   ],
+   "exposed": true,
+   "criticality": 0.1,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 31518,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 25647,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 10743,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 5084,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": [
+    "decorative"
+   ]
+  },
+  {
+   "id": "d-021",
+   "name": "Streetlight HAM-21",
+   "category": "streetlight",
+   "zone": "Hampankatta",
+   "lat": 12.88128,
+   "lon": 74.85027,
+   "firmware": "decorlite/1.0.0",
+   "vulns": [
+    {
+     "cve_id": "CVE-2025-10002",
+     "cvss": 9.8,
+     "epss": 0.02,
+     "kev": false
+    }
+   ],
+   "exposed": true,
+   "criticality": 0.1,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 49798,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 1826,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 12505,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 5124,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": [
+    "decorative"
+   ]
+  },
+  {
+   "id": "d-022",
+   "name": "Signal PAN-22",
+   "category": "signal",
+   "zone": "Panambur",
+   "lat": 12.94925,
+   "lon": 74.81537,
+   "firmware": "generic-signal/1.9",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20021",
+     "cvss": 4.8,
+     "epss": 0.25,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.71,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 36533,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 3586,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 17919,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 13014,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-023",
+   "name": "Ev Charger KOT-23",
+   "category": "ev_charger",
+   "zone": "Kottara",
+   "lat": 12.91639,
+   "lon": 74.82961,
+   "firmware": "generic-ev_charger/1.7",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20022",
+     "cvss": 4.1,
+     "epss": 0.24,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.41,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 39281,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 4513,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-024",
+   "name": "Ev Charger SUR-24",
+   "category": "ev_charger",
+   "zone": "Surathkal",
+   "lat": 13.01883,
+   "lon": 74.7867,
+   "firmware": "generic-ev_charger/1.7",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20023",
+     "cvss": 6.4,
+     "epss": 0.27,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.59,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 49336,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 4801,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 16222,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-025",
+   "name": "Meter HAM-25",
+   "category": "meter",
+   "zone": "Hampankatta",
+   "lat": 12.86188,
+   "lon": 74.83554,
+   "firmware": "generic-meter/1.7",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20024",
+     "cvss": 7.4,
+     "epss": 0.13,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.63,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 47356,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 11815,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-026",
+   "name": "Signal KOT-26",
+   "category": "signal",
+   "zone": "Kottara",
+   "lat": 12.9163,
+   "lon": 74.84099,
+   "firmware": "generic-signal/1.2",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20025",
+     "cvss": 8.4,
+     "epss": 0.17,
+     "kev": false
+    }
+   ],
+   "exposed": true,
+   "criticality": 0.21,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 47827,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 4133,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 12766,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 21894,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-027",
+   "name": "Meter KOT-27",
+   "category": "meter",
+   "zone": "Kottara",
+   "lat": 12.91076,
+   "lon": 74.84595,
+   "firmware": "generic-meter/1.4",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20026",
+     "cvss": 7.2,
+     "epss": 0.17,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.24,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 40763,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 15211,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 1422,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 24101,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-028",
+   "name": "Meter PAN-28",
+   "category": "meter",
+   "zone": "Panambur",
+   "lat": 12.93138,
+   "lon": 74.81265,
+   "firmware": "generic-meter/1.2",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20027",
+     "cvss": 6.3,
+     "epss": 0.05,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.27,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 33963,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 12992,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 29083,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 2009,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-029",
+   "name": "Signal SUR-29",
+   "category": "signal",
+   "zone": "Surathkal",
+   "lat": 13.00359,
+   "lon": 74.78984,
+   "firmware": "generic-signal/1.7",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20028",
+     "cvss": 3.2,
+     "epss": 0.1,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.56,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 44781,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 18388,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 2530,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 21393,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-030",
+   "name": "Signal PAN-30",
+   "category": "signal",
+   "zone": "Panambur",
+   "lat": 12.93164,
+   "lon": 74.80381,
+   "firmware": "generic-signal/1.7",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20029",
+     "cvss": 7.9,
+     "epss": 0.05,
+     "kev": false
+    }
+   ],
+   "exposed": true,
+   "criticality": 0.47,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 44067,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 5851,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-031",
+   "name": "Meter KOT-31",
+   "category": "meter",
+   "zone": "Kottara",
+   "lat": 12.91092,
+   "lon": 74.82988,
+   "firmware": "generic-meter/1.2",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20030",
+     "cvss": 8.2,
+     "epss": 0.08,
+     "kev": false
+    }
+   ],
+   "exposed": true,
+   "criticality": 0.48,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 47978,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 3984,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 1917,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-032",
+   "name": "Signal HAM-32",
+   "category": "signal",
+   "zone": "Hampankatta",
+   "lat": 12.86591,
+   "lon": 74.84217,
+   "firmware": "generic-signal/1.3",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20031",
+     "cvss": 5.2,
+     "epss": 0.11,
+     "kev": false
+    }
+   ],
+   "exposed": true,
+   "criticality": 0.42,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 40418,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 21931,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 6382,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 1535,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-033",
+   "name": "Meter SUR-33",
+   "category": "meter",
+   "zone": "Surathkal",
+   "lat": 13.00529,
+   "lon": 74.78689,
+   "firmware": "generic-meter/1.1",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20032",
+     "cvss": 8.3,
+     "epss": 0.09,
+     "kev": false
+    }
+   ],
+   "exposed": true,
+   "criticality": 0.67,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 31584,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 2503,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 5211,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-034",
+   "name": "Signal KOT-34",
+   "category": "signal",
+   "zone": "Kottara",
+   "lat": 12.89945,
+   "lon": 74.82834,
+   "firmware": "generic-signal/1.0",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20033",
+     "cvss": 4.8,
+     "epss": 0.24,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.74,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 30009,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 2427,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-035",
+   "name": "Meter SUR-35",
+   "category": "meter",
+   "zone": "Surathkal",
+   "lat": 13.02077,
+   "lon": 74.79673,
+   "firmware": "generic-meter/1.7",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20034",
+     "cvss": 4.5,
+     "epss": 0.01,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.45,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 50515,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 6407,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-036",
+   "name": "Ev Charger PAN-36",
+   "category": "ev_charger",
+   "zone": "Panambur",
+   "lat": 12.9406,
+   "lon": 74.81244,
+   "firmware": "generic-ev_charger/1.4",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20035",
+     "cvss": 3.3,
+     "epss": 0.19,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.32,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 51867,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 1444,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 17776,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-037",
+   "name": "Signal PAN-37",
+   "category": "signal",
+   "zone": "Panambur",
+   "lat": 12.94955,
+   "lon": 74.80764,
+   "firmware": "generic-signal/1.8",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20036",
+     "cvss": 6.0,
+     "epss": 0.15,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.26,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 35386,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 12436,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 1675,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-038",
+   "name": "Meter PAN-38",
+   "category": "meter",
+   "zone": "Panambur",
+   "lat": 12.93024,
+   "lon": 74.81151,
+   "firmware": "generic-meter/1.6",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20037",
+     "cvss": 7.6,
+     "epss": 0.3,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.7,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 29329,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 16487,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 23213,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-039",
+   "name": "Signal KOT-39",
+   "category": "signal",
+   "zone": "Kottara",
+   "lat": 12.89678,
+   "lon": 74.83692,
+   "firmware": "generic-signal/1.9",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20038",
+     "cvss": 6.7,
+     "epss": 0.08,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.48,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 51342,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 2056,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 4233,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-040",
+   "name": "Ev Charger PAN-40",
+   "category": "ev_charger",
+   "zone": "Panambur",
+   "lat": 12.94564,
+   "lon": 74.80396,
+   "firmware": "generic-ev_charger/1.0",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20039",
+     "cvss": 4.2,
+     "epss": 0.11,
+     "kev": false
+    }
+   ],
+   "exposed": true,
+   "criticality": 0.37,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 34340,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 18846,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-041",
+   "name": "Ev Charger HAM-41",
+   "category": "ev_charger",
+   "zone": "Hampankatta",
+   "lat": 12.88078,
+   "lon": 74.85006,
+   "firmware": "generic-ev_charger/1.0",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20040",
+     "cvss": 6.2,
+     "epss": 0.1,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.25,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 46343,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 16986,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-042",
+   "name": "Ev Charger PAN-42",
+   "category": "ev_charger",
+   "zone": "Panambur",
+   "lat": 12.9402,
+   "lon": 74.81302,
+   "firmware": "generic-ev_charger/1.0",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20041",
+     "cvss": 3.8,
+     "epss": 0.25,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.51,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 47833,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 5252,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 2471,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 27743,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-043",
+   "name": "Signal SUR-43",
+   "category": "signal",
+   "zone": "Surathkal",
+   "lat": 13.00784,
+   "lon": 74.79333,
+   "firmware": "generic-signal/1.0",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20042",
+     "cvss": 6.5,
+     "epss": 0.02,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.78,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 43029,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 27709,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-044",
+   "name": "Ev Charger HAM-44",
+   "category": "ev_charger",
+   "zone": "Hampankatta",
+   "lat": 12.87362,
+   "lon": 74.83432,
+   "firmware": "generic-ev_charger/1.1",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20043",
+     "cvss": 4.5,
+     "epss": 0.23,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.52,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 48307,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 12613,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 5769,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 20961,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-045",
+   "name": "Signal HAM-45",
+   "category": "signal",
+   "zone": "Hampankatta",
+   "lat": 12.85892,
+   "lon": 74.84566,
+   "firmware": "generic-signal/1.6",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20044",
+     "cvss": 8.4,
+     "epss": 0.03,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.37,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 42392,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 22476,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-046",
+   "name": "Signal KOT-46",
+   "category": "signal",
+   "zone": "Kottara",
+   "lat": 12.89945,
+   "lon": 74.84144,
+   "firmware": "generic-signal/1.9",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20045",
+     "cvss": 7.1,
+     "epss": 0.17,
+     "kev": false
+    }
+   ],
+   "exposed": true,
+   "criticality": 0.24,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 34980,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 5049,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 1957,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 14697,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-047",
+   "name": "Meter PAN-47",
+   "category": "meter",
+   "zone": "Panambur",
+   "lat": 12.94092,
+   "lon": 74.8154,
+   "firmware": "generic-meter/1.4",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20046",
+     "cvss": 8.5,
+     "epss": 0.29,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.21,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 33036,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 2534,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 4132,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-048",
+   "name": "Signal KOT-48",
+   "category": "signal",
+   "zone": "Kottara",
+   "lat": 12.91428,
+   "lon": 74.84207,
+   "firmware": "generic-signal/1.5",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20047",
+     "cvss": 3.5,
+     "epss": 0.05,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.51,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 49544,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "virtual_patch",
+     "cost_inr": 14875,
+     "downtime_h": 0.5,
+     "exploit_mult": 0.3,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-049",
+   "name": "Meter HAM-49",
+   "category": "meter",
+   "zone": "Hampankatta",
+   "lat": 12.86683,
+   "lon": 74.83542,
+   "firmware": "generic-meter/1.7",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20048",
+     "cvss": 3.9,
+     "epss": 0.13,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.45,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 46017,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 30086,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "disable_remote",
+     "cost_inr": 3860,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.4,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  },
+  {
+   "id": "d-050",
+   "name": "Meter KOT-50",
+   "category": "meter",
+   "zone": "Kottara",
+   "lat": 12.90714,
+   "lon": 74.83521,
+   "firmware": "generic-meter/1.4",
+   "vulns": [
+    {
+     "cve_id": "CVE-2024-20049",
+     "cvss": 6.9,
+     "epss": 0.12,
+     "kev": false
+    }
+   ],
+   "exposed": false,
+   "criticality": 0.8,
+   "controls": [
+    {
+     "kind": "patch",
+     "cost_inr": 34735,
+     "downtime_h": 4.0,
+     "exploit_mult": 0.1,
+     "spread_mult": 1.0,
+     "autonomy": "approve"
+    },
+    {
+     "kind": "rotate_creds",
+     "cost_inr": 1461,
+     "downtime_h": 0.0,
+     "exploit_mult": 0.6,
+     "spread_mult": 1.0,
+     "autonomy": "auto"
+    },
+    {
+     "kind": "segment",
+     "cost_inr": 27429,
+     "downtime_h": 2.0,
+     "exploit_mult": 0.7,
+     "spread_mult": 0.3,
+     "autonomy": "approve"
+    }
+   ],
+   "tags": []
+  }
+ ],
+ "edges": [
+  {
+   "src": "d-001",
+   "dst": "d-002",
+   "kind": "reach"
+  },
+  {
+   "src": "d-002",
+   "dst": "d-003",
+   "kind": "reach"
+  },
+  {
+   "src": "d-003",
+   "dst": "d-004",
+   "kind": "reach"
+  },
+  {
+   "src": "d-004",
+   "dst": "d-005",
+   "kind": "reach"
+  },
+  {
+   "src": "d-005",
+   "dst": "d-006",
+   "kind": "reach"
+  },
+  {
+   "src": "d-006",
+   "dst": "d-007",
+   "kind": "reach"
+  },
+  {
+   "src": "d-007",
+   "dst": "d-008",
+   "kind": "reach"
+  },
+  {
+   "src": "d-008",
+   "dst": "d-009",
+   "kind": "reach"
+  },
+  {
+   "src": "d-009",
+   "dst": "d-010",
+   "kind": "reach"
+  },
+  {
+   "src": "d-010",
+   "dst": "d-011",
+   "kind": "reach"
+  },
+  {
+   "src": "d-011",
+   "dst": "d-012",
+   "kind": "reach"
+  },
+  {
+   "src": "d-006",
+   "dst": "d-013",
+   "kind": "reach"
+  },
+  {
+   "src": "d-013",
+   "dst": "d-014",
+   "kind": "reach"
+  },
+  {
+   "src": "d-013",
+   "dst": "d-015",
+   "kind": "reach"
+  },
+  {
+   "src": "d-013",
+   "dst": "d-016",
+   "kind": "reach"
+  },
+  {
+   "src": "d-013",
+   "dst": "d-017",
+   "kind": "reach"
+  },
+  {
+   "src": "d-013",
+   "dst": "d-018",
+   "kind": "reach"
+  },
+  {
+   "src": "d-014",
+   "dst": "d-015",
+   "kind": "depends"
+  },
+  {
+   "src": "d-015",
+   "dst": "d-016",
+   "kind": "depends"
+  },
+  {
+   "src": "d-016",
+   "dst": "d-017",
+   "kind": "depends"
+  },
+  {
+   "src": "d-017",
+   "dst": "d-018",
+   "kind": "depends"
+  },
+  {
+   "src": "d-022",
+   "dst": "d-042",
+   "kind": "reach"
+  },
+  {
+   "src": "d-023",
+   "dst": "d-029",
+   "kind": "reach"
+  },
+  {
+   "src": "d-024",
+   "dst": "d-035",
+   "kind": "reach"
+  },
+  {
+   "src": "d-025",
+   "dst": "d-028",
+   "kind": "reach"
+  },
+  {
+   "src": "d-026",
+   "dst": "d-047",
+   "kind": "reach"
+  },
+  {
+   "src": "d-027",
+   "dst": "d-050",
+   "kind": "reach"
+  },
+  {
+   "src": "d-027",
+   "dst": "d-046",
+   "kind": "depends"
+  },
+  {
+   "src": "d-028",
+   "dst": "d-042",
+   "kind": "reach"
+  },
+  {
+   "src": "d-029",
+   "dst": "d-050",
+   "kind": "reach"
+  },
+  {
+   "src": "d-030",
+   "dst": "d-039",
+   "kind": "reach"
+  },
+  {
+   "src": "d-030",
+   "dst": "d-024",
+   "kind": "depends"
+  },
+  {
+   "src": "d-031",
+   "dst": "d-023",
+   "kind": "reach"
+  },
+  {
+   "src": "d-032",
+   "dst": "d-035",
+   "kind": "reach"
+  },
+  {
+   "src": "d-033",
+   "dst": "d-046",
+   "kind": "reach"
+  },
+  {
+   "src": "d-033",
+   "dst": "d-049",
+   "kind": "depends"
+  },
+  {
+   "src": "d-034",
+   "dst": "d-031",
+   "kind": "reach"
+  },
+  {
+   "src": "d-035",
+   "dst": "d-039",
+   "kind": "reach"
+  },
+  {
+   "src": "d-035",
+   "dst": "d-037",
+   "kind": "depends"
+  },
+  {
+   "src": "d-036",
+   "dst": "d-035",
+   "kind": "reach"
+  },
+  {
+   "src": "d-037",
+   "dst": "d-031",
+   "kind": "reach"
+  },
+  {
+   "src": "d-037",
+   "dst": "d-045",
+   "kind": "depends"
+  },
+  {
+   "src": "d-038",
+   "dst": "d-042",
+   "kind": "reach"
+  },
+  {
+   "src": "d-038",
+   "dst": "d-042",
+   "kind": "depends"
+  },
+  {
+   "src": "d-039",
+   "dst": "d-029",
+   "kind": "reach"
+  },
+  {
+   "src": "d-040",
+   "dst": "d-039",
+   "kind": "reach"
+  },
+  {
+   "src": "d-041",
+   "dst": "d-025",
+   "kind": "reach"
+  },
+  {
+   "src": "d-041",
+   "dst": "d-027",
+   "kind": "depends"
+  },
+  {
+   "src": "d-042",
+   "dst": "d-024",
+   "kind": "reach"
+  },
+  {
+   "src": "d-042",
+   "dst": "d-050",
+   "kind": "depends"
+  },
+  {
+   "src": "d-043",
+   "dst": "d-047",
+   "kind": "reach"
+  },
+  {
+   "src": "d-044",
+   "dst": "d-029",
+   "kind": "reach"
+  },
+  {
+   "src": "d-045",
+   "dst": "d-032",
+   "kind": "reach"
+  },
+  {
+   "src": "d-046",
+   "dst": "d-036",
+   "kind": "reach"
+  },
+  {
+   "src": "d-047",
+   "dst": "d-039",
+   "kind": "reach"
+  },
+  {
+   "src": "d-047",
+   "dst": "d-024",
+   "kind": "depends"
+  },
+  {
+   "src": "d-048",
+   "dst": "d-027",
+   "kind": "reach"
+  },
+  {
+   "src": "d-049",
+   "dst": "d-024",
+   "kind": "reach"
+  },
+  {
+   "src": "d-050",
+   "dst": "d-033",
+   "kind": "reach"
+  },
+  {
+   "src": "d-050",
+   "dst": "d-040",
+   "kind": "depends"
+  }
+ ]
+}

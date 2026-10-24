@@ -1,0 +1,226 @@
+[
+ {
+  "id": "plan-cvar",
+  "city_id": "mangaluru-demo",
+  "objective": "cvar",
+  "choices": {
+   "d-006": "segment",
+   "d-013": "patch",
+   "d-014": "segment",
+   "d-015": "patch",
+   "d-016": "segment",
+   "d-017": "patch",
+   "d-018": "segment"
+  },
+  "cost_inr": 529000,
+  "downtime_h": 18.0,
+  "solver": "milp",
+  "solve_ms": 2400,
+  "metrics": {
+   "cvar": 18.4,
+   "mean_loss": 3.1,
+   "max_cascade": 7,
+   "ci_low": 16.928,
+   "ci_high": 19.872,
+   "linear_gap": 0.06,
+   "split": "test"
+  },
+  "tool_call_id": "tc-placeholder-cvar"
+ },
+ {
+  "id": "plan-mean",
+  "city_id": "mangaluru-demo",
+  "objective": "mean",
+  "choices": {
+   "d-021": "segment",
+   "d-022": "patch",
+   "d-023": "segment",
+   "d-024": "patch",
+   "d-025": "segment",
+   "d-026": "patch",
+   "d-027": "segment",
+   "d-028": "patch"
+  },
+  "cost_inr": 536000,
+  "downtime_h": 18.0,
+  "solver": "milp",
+  "solve_ms": 2400,
+  "metrics": {
+   "cvar": 26.7,
+   "mean_loss": 2.9,
+   "max_cascade": 11,
+   "ci_low": 24.564,
+   "ci_high": 28.836000000000002,
+   "linear_gap": 0.06,
+   "split": "test"
+  },
+  "tool_call_id": "tc-placeholder-mean"
+ },
+ {
+  "id": "plan-cvss",
+  "city_id": "mangaluru-demo",
+  "objective": "cvss",
+  "choices": {
+   "d-018": "segment",
+   "d-019": "patch",
+   "d-020": "segment",
+   "d-031": "patch",
+   "d-032": "segment",
+   "d-033": "patch",
+   "d-034": "segment",
+   "d-035": "patch"
+  },
+  "cost_inr": 536000,
+  "downtime_h": 18.0,
+  "solver": "ranking",
+  "solve_ms": 12,
+  "metrics": {
+   "cvar": 39.5,
+   "mean_loss": 4.4,
+   "max_cascade": 16,
+   "ci_low": 36.34,
+   "ci_high": 42.660000000000004,
+   "linear_gap": 0.06,
+   "split": "test"
+  },
+  "tool_call_id": "tc-placeholder-cvss"
+ },
+ {
+  "id": "plan-bfs_centrality",
+  "city_id": "mangaluru-demo",
+  "objective": "bfs_centrality",
+  "choices": {
+   "d-001": "segment",
+   "d-002": "patch",
+   "d-003": "segment",
+   "d-004": "patch",
+   "d-005": "segment",
+   "d-006": "patch",
+   "d-007": "segment",
+   "d-008": "patch"
+  },
+  "cost_inr": 536000,
+  "downtime_h": 18.0,
+  "solver": "ranking",
+  "solve_ms": 12,
+  "metrics": {
+   "cvar": 31.2,
+   "mean_loss": 3.9,
+   "max_cascade": 13,
+   "ci_low": 28.704,
+   "ci_high": 33.696,
+   "linear_gap": 0.06,
+   "split": "test"
+  },
+  "tool_call_id": "tc-placeholder-bfs_centrality"
+ },
+ {
+  "id": "plan-cvss_kev_epss",
+  "city_id": "mangaluru-demo",
+  "objective": "cvss_kev_epss",
+  "choices": {
+   "d-001": "segment",
+   "d-002": "patch",
+   "d-003": "segment",
+   "d-031": "patch",
+   "d-032": "segment",
+   "d-033": "patch",
+   "d-034": "segment"
+  },
+  "cost_inr": 529000,
+  "downtime_h": 18.0,
+  "solver": "ranking",
+  "solve_ms": 12,
+  "metrics": {
+   "cvar": 33.8,
+   "mean_loss": 3.8,
+   "max_cascade": 14,
+   "ci_low": 31.096,
+   "ci_high": 36.504,
+   "linear_gap": 0.06,
+   "split": "test"
+  },
+  "tool_call_id": "tc-placeholder-cvss_kev_epss"
+ },
+ {
+  "id": "plan-loss_per_inr",
+  "city_id": "mangaluru-demo",
+  "objective": "loss_per_inr",
+  "choices": {
+   "d-021": "segment",
+   "d-022": "patch",
+   "d-023": "segment",
+   "d-024": "patch",
+   "d-025": "segment",
+   "d-026": "patch",
+   "d-027": "segment"
+  },
+  "cost_inr": 529000,
+  "downtime_h": 18.0,
+  "solver": "ranking",
+  "solve_ms": 12,
+  "metrics": {
+   "cvar": 27.9,
+   "mean_loss": 3.0,
+   "max_cascade": 11,
+   "ci_low": 25.668,
+   "ci_high": 30.132,
+   "linear_gap": 0.06,
+   "split": "test"
+  },
+  "tool_call_id": "tc-placeholder-loss_per_inr"
+ },
+ {
+  "id": "plan-greedy_tail",
+  "city_id": "mangaluru-demo",
+  "objective": "greedy_tail",
+  "choices": {
+   "d-006": "segment",
+   "d-013": "patch",
+   "d-014": "segment",
+   "d-015": "patch",
+   "d-016": "segment",
+   "d-017": "patch"
+  },
+  "cost_inr": 522000,
+  "downtime_h": 18.0,
+  "solver": "greedy",
+  "solve_ms": 12,
+  "metrics": {
+   "cvar": 20.1,
+   "mean_loss": 3.2,
+   "max_cascade": 8,
+   "ci_low": 18.492,
+   "ci_high": 21.708000000000002,
+   "linear_gap": 0.06,
+   "split": "test"
+  },
+  "tool_call_id": "tc-placeholder-greedy_tail"
+ },
+ {
+  "id": "plan-patch_only",
+  "city_id": "mangaluru-demo",
+  "objective": "patch_only",
+  "choices": {
+   "d-006": "segment",
+   "d-013": "patch",
+   "d-014": "segment",
+   "d-015": "patch",
+   "d-016": "segment"
+  },
+  "cost_inr": 515000,
+  "downtime_h": 18.0,
+  "solver": "milp",
+  "solve_ms": 2400,
+  "metrics": {
+   "cvar": 24.6,
+   "mean_loss": 3.3,
+   "max_cascade": 9,
+   "ci_low": 22.632,
+   "ci_high": 26.568000000000005,
+   "linear_gap": 0.06,
+   "split": "test"
+  },
+  "tool_call_id": "tc-placeholder-patch_only"
+ }
+]
