@@ -65,7 +65,7 @@ Data is synthetic devices placed on real streets, seeded with real CVE / CISA-KE
    └─ SQLite: devices, edges, scenarios, plans, events, audit_log
 ```
 
-**Stack (unchanged from proposal, trimmed):** Python 3.12, NumPy, SciPy sparse, NetworkX (graph build only), SciPy (HiGHS MILP), FastAPI, Pydantic v2, SQLite, PyNaCl, OpenAI Python SDK (pointed at any compatible endpoint) · React (Vite), Tailwind, Leaflet, Recharts. **No LangChain, no Kafka, no Kubernetes, no vector DB.**
+**Stack (unchanged from proposal, trimmed):** Python 3.12, NumPy, SciPy sparse, NetworkX (graph build only), SciPy (HiGHS MILP), FastAPI, Pydantic v2, SQLite, PyNaCl, OpenAI Python SDK (pointed at any compatible endpoint) · React (Vite), Tailwind, Leaflet, hand-built SVG charts. **No LangChain, no Kafka, no Kubernetes, no vector DB.**
 
 **Models:** a fast model for Sentinel extraction, a strong model for Planner/Red-Team, set in `.env`. OmniRush tokens power the team's *coding agents*; the app's runtime agents need one OpenAI-compatible key for live recording, and run in `mock`/`replay` otherwise.
 
@@ -133,7 +133,7 @@ Map these against the **OWASP Top 10 for LLM Applications** on one slide (LLM01 
 2. **Plans**: same ₹ budget, three plans side by side (**CVSS-first · BFS-only · UrbanShield**). Loss histogram with the tail shaded, one headline number with its CI, and "what flipped" diff chips. Full baseline + ablation table under a fold.
 3. **Agents**: live SSE timeline (agent → tool call → decision), approval buttons, Auditor counter, audit log with **Verify chain**, Judge Mode panel.
 
-Design: dark, one accent colour, Inter / JetBrains Mono for numbers, generous spacing, no gradients. Every number is clickable for provenance. Built with the `frontend-design` / `ui-ux-pro-max` skills.
+Design (as built): light municipal-console theme, forest green for UrbanShield, red/orange/amber/green only for risk, DM Serif Display titles over Inter, no decorative gradients. Every number is clickable for provenance. Built with the `ui-ux-pro-max` guidelines.
 
 ---
 
@@ -181,7 +181,7 @@ Chronoforge/
 │   └─ guard/   quarantine, allowlists, auditor, audit_log
 ├─ backend/data/  kev_epss_snapshot.json + .sha256, advisories/ (incl. poisoned), traces/ (replay)
 ├─ backend/tests/ · backend/bench.py
-└─ frontend/  Vite + React + Tailwind + Leaflet + Recharts
+└─ frontend/  Vite + React + Tailwind + Leaflet
 ```
 
 ---

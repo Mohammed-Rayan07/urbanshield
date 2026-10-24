@@ -1,51 +1,49 @@
-import { useState } from 'react'
-import { api, useLoad } from './api'
-import AgentsScreen from './screens/AgentsScreen'
+import { lazy, Suspense, useEffect, type ComponentType } from 'react'
+import ProvenanceDrawer from './components/ProvenanceDrawer'
+import Shell from './components/Shell'
+import StoreProvider from './components/StoreProvider'
+import { Skeleton } from './components/ui'
+import { useRoute, type RouteId } from './lib/route'
 import CityScreen from './screens/CityScreen'
-import PlansScreen from './screens/PlansScreen'
 
-const TABS = [
-  { id: 'city', label: 'City', Screen: CityScreen },
-  { id: 'plans', label: 'Plans', Screen: PlansScreen },
-  { id: 'agents', label: 'Agents', Screen: AgentsScreen },
-] as const
+// The Overview ships in the main bundle; the other workspaces load on first visit.
+const SCREENS: Record<RouteId, { title: string; Screen: ComponentType }> = {
+  overview: { title: 'Overview', Screen: CityScreen },
+  risk: { title: 'Risk Intelligence', Screen: lazy(() => import('./screens/PlansScreen')) },
+  response: { title: 'Response & Mitigation', Screen: lazy(() => import('./screens/AgentsScreen')) },
+  devices: { title: 'Devices', Screen: lazy(() => import('./screens/DevicesScreen')) },
+  judge: { title: 'Judge Mode', Screen: lazy(() => import('./screens/JudgeScreen')) },
+  audit: { title: 'Audit Log', Screen: lazy(() => import('./screens/AuditScreen')) },
+}
 
-type TabId = (typeof TABS)[number]['id']
+function ScreenFallback() {
+  return (
+    <div className="space-y-5" aria-busy="true">
+      <Skeleton className="h-24 w-1/2" />
+      <div className="grid grid-cols-5 gap-3">
+        {Array.from({ length: 5 }, (_, i) => (
+          <Skeleton key={i} className="h-24" />
+        ))}
+      </div>
+      <Skeleton className="h-[420px]" />
+    </div>
+  )
+}
 
 export default function App() {
-  const [tab, setTab] = useState<TabId>('city')
-  const [health] = useLoad(() => api.health())
-  const { Screen } = TABS.find((t) => t.id === tab)!
-
+  const route = useRoute()
+  const { title, Screen } = SCREENS[route.id]
+  useEffect(() => {
+    document.title = `${title} · UrbanShield`
+  }, [title])
   return (
-    <div className="flex h-full flex-col">
-      {health?.data === 'placeholder' && (
-        <div role="status" className="bg-warn px-6 py-1 text-center text-xs font-semibold text-bg">
-          PLACEHOLDER DATA: numbers are not from the simulator yet
-        </div>
-      )}
-      <header className="flex items-center gap-8 border-b border-line px-6 py-3">
-        <h1 className="text-lg font-semibold tracking-tight">
-          Urban<span className="text-accent">Shield</span>
-        </h1>
-        <nav className="flex gap-1" aria-label="Screens">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              aria-current={tab === t.id ? 'page' : undefined}
-              className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                tab === t.id ? 'bg-panel text-ink' : 'text-muted hover:text-ink'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </nav>
-      </header>
-      <main className="min-h-0 flex-1">
-        <Screen />
-      </main>
-    </div>
+    <StoreProvider>
+      <Shell route={route.id}>
+        <Suspense fallback={<ScreenFallback />}>
+          <Screen />
+        </Suspense>
+      </Shell>
+      <ProvenanceDrawer />
+    </StoreProvider>
   )
 }

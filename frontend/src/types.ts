@@ -93,6 +93,39 @@ export interface Plan {
   tool_call_id: string | null
 }
 
+export interface DeviceRisk {
+  device_id: string
+  mean_loss: number
+  /** Mean loss attributed to the device in the CVaR tail; summed over devices it is the CVaR. */
+  tail_loss: number
+  p_compromised: number
+}
+
+export interface LossHistogram {
+  /** 'none' (no controls) or the plan's objective. */
+  label: 'none' | Objective
+  plan_id: string | null
+  cvar: number
+  /** Loss at the tail threshold (the smallest tail scenario). */
+  var: number
+  mean_loss: number
+  /** Scenarios per bin of CityRisk.bin_edges. */
+  counts: number[]
+}
+
+export interface CityRisk {
+  city_id: string
+  n_scenarios: number
+  alpha: number
+  bin_edges: number[]
+  /** No controls. */
+  baseline: DeviceRisk[]
+  /** Under the CVaR plan. */
+  protected: DeviceRisk[]
+  histograms: LossHistogram[]
+  tool_call_id: string | null
+}
+
 export interface LLMUsage {
   model: string
   prompt_tokens: number

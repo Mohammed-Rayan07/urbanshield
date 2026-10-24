@@ -13,7 +13,7 @@ hackathon. Read these rules first, then the manual for your part in `docs/manual
 4. **Keep signatures.** Implement the stubs exactly as declared (names, parameters, return types).
    You may add private helpers (`_name`) and new private modules inside your own folders.
 5. **No new dependencies** without the integrator's OK. Allowed backend libs: numpy, scipy, networkx,
-   pydantic, pynacl, fastapi, openai. Frontend: react, leaflet, react-leaflet, recharts, tailwind.
+   pydantic, pynacl, fastapi, openai. Frontend: react, leaflet, react-leaflet, tailwind, lucide-react, @fontsource fonts (vitest for tests).
 6. **No secrets.** Never write API keys or tokens into files. Never commit `.env`.
 7. **Deterministic.** Same inputs and seed must give identical outputs. Use `numpy.random.default_rng(seed)`
    or `random.Random(seed)`, never global random state.

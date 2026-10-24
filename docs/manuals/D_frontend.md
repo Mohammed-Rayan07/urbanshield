@@ -36,11 +36,20 @@ All endpoints you need already exist (`src/api.ts`): `city`, `plans`, `startInci
 They return placeholder data until the backend lands (a yellow **PLACEHOLDER DATA** banner shows while
 `/api/health` says `data: placeholder`); **the shapes will not change**.
 
-## Design rules
+## Design rules (as built)
 
-- Dark theme tokens from `src/index.css` only (`bg-bg`, `bg-panel`, `border-line`, `text-ink`,
-  `text-muted`, `text-accent`, `text-danger`, `text-ok`, `text-warn`). One accent colour. No gradients.
-- Inter for text, JetBrains Mono for numbers/IDs (add both from Google Fonts in `index.html`).
+> **Status:** built by the integrator from three reference layouts (Overview, Risk Intelligence,
+> Response & Mitigation) plus Devices, Judge Mode and Audit Log. The rules below describe the result.
+
+- Light municipal-console theme. Tokens live in the `@theme` block of `src/index.css` (`forest-*`,
+  `canvas`, `surface`, `line`, `ink`, `muted`, `danger`, `high`, `warn`, `ok`, `info`); SVG code uses the
+  same values from `src/lib/colors.ts`. Forest green means UrbanShield; red/orange/amber/green mean risk
+  and nothing else. Device category is encoded by marker shape, never by colour. No decorative gradients.
+- DM Serif Display for page titles, Inter for UI and numbers (tabular figures), JetBrains Mono for IDs
+  and hashes. All three are self-hosted through `@fontsource`, so the demo works offline.
+- Motion explains something (counting KPIs, staggered entrance, ripples on alert carriers, flowing
+  attack paths, the hold-to-approve fill, the audit chain sweep/break) and respects `prefers-reduced-motion`.
+- Basemap: Esri Light Gray Canvas / World Imagery (CARTO tiles now require an API key).
 - Numbers: ₹ with Indian grouping (`toLocaleString('en-IN')`), losses to 1 decimal, percentages with sign.
 - Every metric on screen is a `<Metric>` component: click → **provenance drawer** showing the tool call
   (`api.toolResult(tool_call_id)`): tool, agent, args, result JSON, timestamp.

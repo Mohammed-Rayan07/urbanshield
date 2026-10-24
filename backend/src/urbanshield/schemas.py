@@ -236,6 +236,40 @@ class Plan(Contract):
     tool_call_id: str | None = None
 
 
+# --------------------------------------------------------------------------- dashboard risk
+
+
+class DeviceRisk(Contract):
+    """Where one device's simulated loss sits. ``tail_loss`` summed over devices is the CVaR."""
+
+    device_id: str
+    mean_loss: float = Field(ge=0)
+    tail_loss: float = Field(ge=0, description="Mean loss attributed to the device in the CVaR tail")
+    p_compromised: float = Field(ge=0, le=1)
+
+
+class LossHistogram(Contract):
+    label: str = Field(description="'none' (no controls) or the plan's objective")
+    plan_id: str | None = None
+    cvar: float = Field(ge=0)
+    var: float = Field(ge=0, description="Loss at the tail threshold: the smallest tail scenario")
+    mean_loss: float = Field(ge=0)
+    counts: list[int] = Field(description="Scenarios per bin of CityRisk.bin_edges")
+
+
+class CityRisk(Contract):
+    """Held-out simulation of the city with no controls and under the compared plans."""
+
+    city_id: str
+    n_scenarios: int = Field(gt=0)
+    alpha: float = Field(gt=0, lt=1)
+    bin_edges: list[float]
+    baseline: list[DeviceRisk] = Field(description="No controls")
+    protected: list[DeviceRisk] = Field(description="Under the CVaR plan")
+    histograms: list[LossHistogram]
+    tool_call_id: str | None = None
+
+
 # --------------------------------------------------------------------------- agents
 
 

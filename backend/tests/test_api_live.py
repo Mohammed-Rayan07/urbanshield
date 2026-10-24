@@ -88,6 +88,23 @@ def test_live_city_plans_and_provenance(client) -> None:
     assert client.get("/api/tool-results/tc-001").status_code == 404
 
 
+def test_live_risk_decomposes_the_cvar_and_matches_the_plans(client) -> None:
+    risk = client.get("/api/cities/tiny/risk").json()
+    hist = {h["label"]: h for h in risk["histograms"]}
+    assert hist["none"]["plan_id"] is None and {"cvss", "cvar"} <= hist.keys()
+    assert len(risk["bin_edges"]) == len(hist["none"]["counts"]) + 1
+    assert all(sum(h["counts"]) == risk["n_scenarios"] for h in hist.values())
+    # The tail contributions are a decomposition of the city CVaR (additive loss model).
+    assert sum(d["tail_loss"] for d in risk["baseline"]) == pytest.approx(hist["none"]["cvar"], abs=1e-2)
+    assert sum(d["tail_loss"] for d in risk["protected"]) == pytest.approx(hist["cvar"]["cvar"], abs=1e-2)
+    assert all(h["var"] <= h["cvar"] for h in hist.values())
+    plans = {p["objective"]: p for p in client.get("/api/cities/tiny/plans").json()}
+    assert hist["cvar"]["plan_id"] == plans["cvar"]["id"]
+    record = client.get(f"/api/tool-results/{risk['tool_call_id']}").json()
+    assert record["tool"] == "simulate" and record["result"]["views"]["none"]["cvar"] == hist["none"]["cvar"]
+    assert client.get("/api/cities/nope/risk").status_code == 404
+
+
 def test_full_run_with_approval_over_http(client) -> None:
     run_id = _start(client)
     pending = _wait_pending(client, run_id)

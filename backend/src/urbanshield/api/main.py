@@ -32,7 +32,7 @@ from urbanshield.agents.engine import Engine, default_engine, engine_ready
 from urbanshield.agents.llm import LLM, ReplayMiss, get_llm
 from urbanshield.agents.orchestrator import run_incident
 from urbanshield.agents.tools import RunContext, plan_brief
-from urbanshield.api import fixtures
+from urbanshield.api import fixtures, risk
 from urbanshield.api.runs import RunRegistry, RunState
 from urbanshield.config import Settings, get_settings
 from urbanshield.guard import quarantine
@@ -44,6 +44,7 @@ from urbanshield.schemas import (
     AuditEntry,
     Budget,
     City,
+    CityRisk,
     EventKind,
     Plan,
     ToolResult,
@@ -54,6 +55,7 @@ log = logging.getLogger("urbanshield.api")
 
 APPROVER = "approver"
 PLANS_TOOL_ID = "tc-plans"
+RISK_TOOL_ID = "tc-risk"
 PREVIEW_CONCURRENCY = 2  # each preview is one LLM call; bound the spend and the threadpool
 MAX_AUDIT_PAGE = 5000
 
@@ -287,6 +289,40 @@ def create_app(
         city_or_404(city_id)
         return live_plans()[0] if is_live else list(fixtures.demo_plans())
 
+    def live_risk() -> CityRisk:
+        """Held-out simulation with no controls and under the compared plans, computed once."""
+        with cache_lock:
+            if "risk" not in plans_cache:
+                city = the_city()
+                result = risk.city_risk(engine, city, live_plans()[0], settings.n_scenarios, budget.alpha)
+                totals = {h.label: {"cvar": h.cvar, "mean_loss": h.mean_loss} for h in result.histograms}
+                plans_cache["risk_record"] = ToolResult(
+                    id=RISK_TOOL_ID,
+                    tool="simulate",
+                    agent=AgentName.ANALYST,
+                    args={
+                        "n_scenarios": settings.n_scenarios,
+                        "seed": engine.test_seed,
+                        "alpha": budget.alpha,
+                    },
+                    result={"views": totals},
+                )
+                plans_cache["risk"] = result.model_copy(update={"tool_call_id": RISK_TOOL_ID})
+            return plans_cache["risk"]
+
+    @app.get(
+        "/api/cities/{city_id}/risk",
+        response_model=CityRisk,
+        responses={503: {"description": "The simulator is not ready (placeholder data)"}},
+    )
+    def get_risk(city_id: str) -> CityRisk:
+        """Per-device simulated loss (no controls, and under the CVaR plan) and the total-loss
+        distribution of the uncontrolled city and of the CVSS-first, BFS-only and CVaR plans."""
+        city_or_404(city_id)
+        if not is_live:
+            raise HTTPException(status_code=503, detail="risk needs the simulator (placeholder data)")
+        return live_risk()
+
     @app.post(
         "/api/cities/{city_id}/incidents",
         response_model=IncidentStarted,
@@ -418,6 +454,9 @@ def create_app(
     def get_tool_result(tool_call_id: str) -> ToolResult:
         """Provenance for the precomputed ``/plans`` comparison."""
         if is_live:
+            if tool_call_id == RISK_TOOL_ID:
+                live_risk()
+                return plans_cache["risk_record"]
             _, record = live_plans()
             if tool_call_id != record.id:
                 raise HTTPException(status_code=404, detail=f"unknown tool call {tool_call_id!r}")

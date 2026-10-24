@@ -7,14 +7,18 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "test": "vitest run",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource/dm-serif-display": "^5.3.0",
     "leaflet": "^1.9.4",
+    "lucide-react": "^1.61.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-leaflet": "^5.0.0",
-    "recharts": "^3.10.1"
+    "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -26,6 +30,7 @@
     "oxlint": "^1.88.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.3",
-    "vite": "^8.3.4"
+    "vite": "^8.3.4",
+    "vitest": "^4.1.12"
   }
 }

@@ -1,10 +1,11 @@
 // Typed client for the UrbanShield API. Every network call in the app goes through here.
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type {
   AdvisoryPreset,
   AgentEvent,
   AuditEntry,
   City,
+  CityRisk,
   Plan,
   QuarantinePreview,
   ToolResult,
@@ -13,12 +14,30 @@ import type {
 
 export const CITY_ID = 'mangaluru-demo'
 
+/** An API error that keeps the HTTP status and the server's `detail` message. */
+export class ApiError extends Error {
+  readonly status: number
+  constructor(status: number, message: string) {
+    super(message)
+    this.status = status
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
     headers: { 'Content-Type': 'application/json' },
     ...init,
   })
-  if (!res.ok) throw new Error(`${init?.method ?? 'GET'} ${path} failed: ${res.status}`)
+  if (!res.ok) {
+    let detail = `${init?.method ?? 'GET'} ${path} failed: ${res.status}`
+    try {
+      const body = (await res.json()) as { detail?: unknown }
+      if (typeof body.detail === 'string') detail = body.detail
+    } catch {
+      // not JSON: keep the status line
+    }
+    throw new ApiError(res.status, detail)
+  }
   return res.json() as Promise<T>
 }
 
@@ -38,10 +57,12 @@ export const api = {
   health: () => request<Health>('/health'),
   city: (cityId = CITY_ID) => request<City>(`/cities/${cityId}`),
   plans: (cityId = CITY_ID) => request<Plan[]>(`/cities/${cityId}/plans`),
+  /** Held-out simulation: per-device loss and the loss distribution per strategy. */
+  risk: (cityId = CITY_ID) => request<CityRisk>(`/cities/${cityId}/risk`),
   startIncident: (advisoryText: string, constraintsText?: string, cityId = CITY_ID) =>
     request<{ run_id: string }>(`/cities/${cityId}/incidents`, {
       method: 'POST',
-      body: JSON.stringify({ advisory_text: advisoryText, constraints_text: constraintsText ?? null }),
+      body: JSON.stringify({ advisory_text: advisoryText, constraints_text: constraintsText || null }),
     }),
   // Demo RBAC: the approver role travels in a header (not real authentication).
   approve: (runId: string, planId: string, approve = true) =>
@@ -50,7 +71,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json', 'X-Role': 'approver' },
       body: JSON.stringify({ plan_id: planId, approve }),
     }),
-  /** Provenance for the precomputed /plans comparison. */
+  /** Provenance for the precomputed /plans comparison and /risk simulation. */
   toolResult: (toolCallId: string) => request<ToolResult>(`/tool-results/${toolCallId}`),
   /** Provenance for a number in a run's timeline (tool ids restart at tc-001 in every run). */
   runToolResult: (runId: string, toolCallId: string) =>
@@ -64,24 +85,39 @@ export const api = {
     }),
   auditEntries: () => request<AuditEntry[]>('/audit/entries'),
   verifyAudit: () => request<VerifyResult>('/audit/verify'),
+  /** Judge Mode only: exists when the server runs with ALLOW_DEMO_TAMPER=1 (404 otherwise). */
+  tamper: (seq: number) =>
+    request<{ tampered_seq: number }>('/audit/tamper', { method: 'POST', body: JSON.stringify({ seq }) }),
 }
 
-/** Load once on mount. Returns [data, error]. */
-export function useLoad<T>(load: () => Promise<T>): [T | null, Error | null] {
+export interface Loaded<T> {
+  data: T | null
+  error: Error | null
+  reload: () => void
+}
+
+/** Load on mount; `reload()` fetches again (keeping the old data on screen meanwhile). */
+export function useLoad<T>(load: () => Promise<T>): Loaded<T> {
   const [data, setData] = useState<T | null>(null)
   const [error, setError] = useState<Error | null>(null)
-  const loadOnce = useRef(load) // callers pass inline arrows; load only the first one
+  const [tick, setTick] = useState(0)
+  const loadRef = useRef(load) // callers pass inline arrows; keep the first one
   useEffect(() => {
     let live = true
-    loadOnce.current().then(
-      (d) => live && setData(d),
+    loadRef.current().then(
+      (d) => {
+        if (!live) return
+        setData(d)
+        setError(null)
+      },
       (e: Error) => live && setError(e),
     )
     return () => {
       live = false
     }
-  }, [])
-  return [data, error]
+  }, [tick])
+  const reload = useCallback(() => setTick((t) => t + 1), [])
+  return { data, error, reload }
 }
 
 /** Subscribe to a run's Server-Sent Events. Events accumulate in arrival order. */

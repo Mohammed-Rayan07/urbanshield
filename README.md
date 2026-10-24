@@ -57,6 +57,22 @@ Or everything in Docker, offline replay mode: `docker compose up --build` → <h
 
 No API key is needed: `LLM_MODE=mock` (default) runs deterministic agents, `replay` serves recorded agent traces. See [`.env.example`](.env.example) for live mode with any OpenAI-compatible endpoint.
 
+## The dashboard
+
+Six workspaces, one shared state (selected device, CVE alert and running incident follow you between them).
+Every dotted number opens a provenance drawer with the tool call, arguments and result that produced it.
+
+| Workspace | What it shows |
+|---|---|
+| **Overview** | The twin on a real basemap, coloured by each device's share of the simulated worst case (`/risk`); flip to "With UrbanShield" on the same scale. Active alerts rank inventory CVEs by the tail loss their carriers hold. |
+| **Risk Intelligence** | The held-out loss distribution of no controls, CVSS-first, BFS-only and UrbanShield with the worst 5% shaded; all eight plans side by side; where the budget goes; plan overlap; findings computed from the data. |
+| **Response & Mitigation** | Run an advisory (normal, poisoned or valid-but-wrong) through the agent loop live over SSE: pipeline stepper, ranked controls, attack paths on the map, hold-to-approve, re-simulated outcome, Auditor verdicts. `#/response?run=<id>` re-attaches to a run. |
+| **Devices** | The inventory with CVEs, EPSS/KEV, controls and each device's tail share. |
+| **Judge Mode** | Paste anything: the flagged spans stay in quarantine, only six typed, cross-checked fields reach the planner. Tamper with the audit log and watch Verify find the edit. |
+| **Audit Log** | The Ed25519-signed hash chain, its public key and a live verification. |
+
+`cd frontend && npm test` runs the unit tests for the event folding and risk derivations.
+
 ## Repository layout
 
 ```
@@ -68,7 +84,7 @@ backend/src/urbanshield/
   agents/      Sentinel, Analyst, Planner, Red-Team, orchestrator, provider-agnostic LLM adapter
   guard/       quarantine, tool allowlists, Auditor, hash-chained audit log
   api/         FastAPI + Server-Sent Events
-frontend/      React + Vite + Tailwind + Leaflet + Recharts
+frontend/      React + Vite + Tailwind + Leaflet; hand-built SVG charts
 docs/          architecture, assumptions, evaluation, demo script, team manuals
 ```
 

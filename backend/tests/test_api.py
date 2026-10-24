@@ -42,6 +42,11 @@ def test_plans_have_metrics(client) -> None:
     assert all(p["metrics"] is not None for p in plans)
 
 
+def test_risk_is_refused_on_placeholder_data(client) -> None:
+    # Placeholder plans are not simulator output, so there is no honest risk breakdown to show.
+    assert client.get(f"/api/cities/{CITY}/risk").status_code == 503
+
+
 def test_incident_validates_input(client) -> None:
     assert client.post(f"/api/cities/{CITY}/incidents", json={"advisory_text": ""}).status_code == 422
     r = client.post(f"/api/cities/{CITY}/incidents", json={"advisory_text": "CVE-2025-31337 …"})
