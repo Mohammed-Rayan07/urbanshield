@@ -8,10 +8,11 @@
 
 Solved with HiGHS through ``scipy.optimize.milp`` (bundled with SciPy: no external solver
 binary). Scenarios with zero loss can never be in the tail, so they get no ``z`` variable.
-If HiGHS hits ``time_limit_s`` it returns its best incumbent (``solver=Solver.MILP``); if it
-has none, the greedy plan is returned with ``solver=Solver.GREEDY`` (the UI shows which
-solver ran). ``objective=MEAN`` minimises expected loss with the same constraints
-(ablation); ``objective=PATCH_ONLY`` is CVaR restricted to PATCH (ablation).
+If HiGHS stops at ``time_limit_s``, its incumbent is kept (``solver=Solver.MILP``) only when
+it beats the greedy plan on the same objective; otherwise, or with no incumbent, the greedy
+plan is returned with ``solver=Solver.GREEDY`` (the UI shows which solver ran).
+``objective=MEAN`` minimises expected loss with the same constraints (ablation);
+``objective=PATCH_ONLY`` is CVaR restricted to PATCH (ablation).
 """
 
 from __future__ import annotations
@@ -23,7 +24,7 @@ from scipy import sparse
 from scipy.optimize import Bounds, LinearConstraint, milp
 
 from urbanshield.opt._model import OptionTable, effective_budget, must_fix, option_table, plan_id
-from urbanshield.opt.common import tail_size
+from urbanshield.opt.common import cvar, tail_size
 from urbanshield.opt.greedy import greedy_tail
 from urbanshield.schemas import (
     Budget,
@@ -102,12 +103,29 @@ def solve(
         options={"time_limit": time_limit_s, "mip_rel_gap": MIP_REL_GAP, "disp": False},
     )
 
-    if result.x is None:  # infeasible, or no incumbent before the time limit
-        fallback = greedy_tail(city, losses, budget, _greedy_constraints(constraints, patch_only))
-        return _plan(city, objective, fallback.choices, table, Solver.GREEDY, t0)
-    chosen = np.flatnonzero(result.x[:m] > 0.5)
-    choices = {table.keys[j][0]: table.keys[j][1] for j in chosen}
-    return _plan(city, objective, choices, table, Solver.MILP, t0)
+    choices = None
+    if result.x is not None:
+        chosen = np.flatnonzero(result.x[:m] > 0.5)
+        choices = {table.keys[j][0]: table.keys[j][1] for j in chosen}
+    if result.status == 0 and choices is not None:  # proven optimal (within MIP_REL_GAP)
+        return _plan(city, objective, choices, table, Solver.MILP, t0)
+
+    # Infeasible, or stopped at the time limit: a time-limited incumbent can be poor on large
+    # cities, so keep it only if it beats the greedy plan on the same objective.
+    fallback = greedy_tail(city, losses, budget, _greedy_constraints(constraints, patch_only)).choices
+    if choices is not None and _value(table, choices, objective, limits.alpha) <= _value(
+        table, fallback, objective, limits.alpha
+    ):
+        return _plan(city, objective, choices, table, Solver.MILP, t0)
+    return _plan(city, objective, fallback, table, Solver.GREEDY, t0)
+
+
+def _value(table: OptionTable, choices: dict[str, ControlKind], objective: Objective, alpha: float) -> float:
+    """The planner's objective for ``choices`` under the option table (lower is better)."""
+    column = {key: j for j, key in enumerate(table.keys)}
+    picked = [column[key] for key in choices.items() if key in column]
+    loss = table.base - table.saved[:, picked].sum(axis=1)
+    return float(loss.mean()) if objective == Objective.MEAN else cvar(loss, alpha)
 
 
 def _pad(row: LinearConstraint, n_extra: int) -> LinearConstraint:

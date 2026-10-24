@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from fakes import ScriptedLLM, SpyLLM, make_ctx, reply
+from fakes import TEST_ADVISORIES, ScriptedLLM, SpyLLM, make_ctx, reply
 from urbanshield.agents.analyst import assess
 from urbanshield.agents.planner import parse_constraints, run_planner
 from urbanshield.agents.sentinel import run_sentinel
 from urbanshield.guard.quarantine import load_presets, sha256_text
 from urbanshield.schemas import AgentName, ConstraintKind, EventKind
 
-PRESETS = {p["id"]: p["text"] for p in load_presets()}
+PRESETS = {p["id"]: p["text"] for p in load_presets(TEST_ADVISORIES)}
 
 
 def _sentinel(ctx, preset="normal_01_lumenos"):

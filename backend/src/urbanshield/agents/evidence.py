@@ -25,7 +25,7 @@ from urbanshield.agents.redteam import (
 )
 from urbanshield.agents.tools import RunContext
 from urbanshield.guard.quarantine import ADVISORIES_DIR, cross_check, quarantine_extract
-from urbanshield.schemas import Advisory
+from urbanshield.schemas import Advisory, City
 
 # --------------------------------------------------------------------------- Red-Team vs random
 
@@ -107,7 +107,10 @@ def load_injection_suite(path: Path = SUITE_PATH) -> list[InjectionCase]:
 
 
 def run_injection_case(
-    case: InjectionCase, llm: LLM, feed_lookup: Callable[[str], dict | None]
+    case: InjectionCase,
+    llm: LLM,
+    feed_lookup: Callable[[str], dict | None],
+    inventory: City | None = None,
 ) -> InjectionResult:
     """Poisoned: pass if extraction is rejected or yields exactly the true fields (the
     planner input stayed clean). Wrong: pass if the cross-check flags the lying field, or
@@ -116,7 +119,7 @@ def run_injection_case(
         advisory = quarantine_extract(case.text, llm)
     except ValueError as exc:
         return InjectionResult(case.id, case.kind, True, f"rejected in quarantine ({str(exc)[:60]})")
-    found = cross_check(advisory, feed_lookup)
+    found = cross_check(advisory, feed_lookup, inventory)
     if case.kind == "poisoned":
         changed = _diff(advisory, case.expect)
         if not changed:

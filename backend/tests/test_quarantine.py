@@ -6,12 +6,11 @@ import json
 
 import pytest
 
-from fakes import FAKE_FEED, SpyLLM, fake_feed_record
+from fakes import FAKE_FEED, TEST_ADVISORIES, SpyLLM, fake_feed_record
 from urbanshield.agents.llm import LLMResponse, get_llm
 from urbanshield.agents.mock import MockLLM
 from urbanshield.config import Settings
 from urbanshield.guard.quarantine import (
-    ADVISORIES_DIR,
     cross_check,
     load_presets,
     quarantine_extract,
@@ -19,7 +18,7 @@ from urbanshield.guard.quarantine import (
 )
 from urbanshield.schemas import Advisory, LLMUsage
 
-LUMENOS = (ADVISORIES_DIR / "normal_01_lumenos.txt").read_text(encoding="utf-8")
+LUMENOS = (TEST_ADVISORIES / "normal_01_lumenos.txt").read_text(encoding="utf-8")
 
 
 def _advisory(**overrides) -> Advisory:
@@ -193,13 +192,13 @@ def test_feed_record_missing_fields_is_a_discrepancy() -> None:
 
 
 def test_presets_cover_every_kind() -> None:
-    presets = load_presets()
+    presets = load_presets(TEST_ADVISORIES)
     kinds = [p["kind"] for p in presets]
     assert kinds.count("normal") == 3 and kinds.count("poisoned") == 3 and kinds.count("wrong") == 3
     assert all(p["text"] for p in presets)
 
 
-@pytest.mark.parametrize("preset", load_presets(), ids=lambda p: p["id"])
+@pytest.mark.parametrize("preset", load_presets(TEST_ADVISORIES), ids=lambda p: p["id"])
 def test_presets_behave_as_labelled(preset) -> None:
     adv = quarantine_extract(preset["text"], MockLLM())
     found = cross_check(adv, fake_feed_record)
@@ -208,3 +207,69 @@ def test_presets_behave_as_labelled(preset) -> None:
     else:
         assert found == [], found
         assert FAKE_FEED[adv.cve_id]["cvss"] == adv.cvss
+
+
+# ---------------------------------------------------------------- cross_check against the inventory
+
+
+def test_inventory_consistent_advisory_passes(tiny_city) -> None:
+    assert cross_check(_advisory(), fake_feed_record, tiny_city) == []
+
+
+@pytest.mark.parametrize(
+    ("overrides", "needle"),
+    [
+        ({"vendor": "Trafikon", "firmware_family": "trafikon"}, "vendor/firmware family"),
+        ({"vendor": "Trafikon"}, "vendor 'Trafikon' does not match"),
+        ({"affected_below": "4.1.0"}, "leaves out d-001 (lumenos 4.1.3), d-002 (lumenos 4.1.3)"),
+        ({"cvss": 2.1}, "CVSS"),
+    ],
+)
+def test_inventory_flags_each_lie(tiny_city, overrides, needle) -> None:
+    found = cross_check(_advisory(**overrides), fake_feed_record, tiny_city)
+    assert any(needle in d for d in found), found
+
+
+def test_inventory_flags_a_range_that_pulls_in_devices_without_the_cve(tiny_city) -> None:
+    devices = [
+        *tiny_city.devices,
+        tiny_city.devices[0].model_copy(update={"id": "d-007", "firmware": "lumenos/4.1.9", "vulns": []}),
+    ]
+    city = tiny_city.model_copy(update={"devices": devices})
+    found = cross_check(_advisory(affected_below="5.0.0"), fake_feed_record, city)
+    assert any("also covers d-007 (lumenos 4.1.9)" in d for d in found), found
+
+
+def test_inventory_without_carriers_only_flags_a_range_that_matches(tiny_city) -> None:
+    city = tiny_city.model_copy(
+        update={"devices": [d.model_copy(update={"vulns": []}) for d in tiny_city.devices]}
+    )
+    assert cross_check(_advisory(affected_below="4.0.0"), fake_feed_record, city) == []
+    [found] = cross_check(_advisory(), fake_feed_record, city)
+    assert "no device in the inventory lists CVE-2025-31337" in found
+
+
+# ---------------------------------------------------------------- shipped presets on the real twin
+
+
+@pytest.fixture(scope="module")
+def demo_city():
+    from urbanshield.city.generator import generate_city
+
+    return generate_city(seed=7)  # the default CITY_SEED (config.py), which the presets are written for
+
+
+@pytest.mark.parametrize("preset", load_presets(), ids=lambda p: p["id"])
+def test_shipped_presets_behave_as_labelled_on_the_real_twin(preset, demo_city) -> None:
+    """The Judge Mode presets against A's pinned KEV feed and the demo city they are written for."""
+    from urbanshield.agents.sentinel import match_inventory
+    from urbanshield.city.feeds import feed_record
+
+    adv = quarantine_extract(preset["text"], MockLLM())
+    found = cross_check(adv, feed_record, demo_city)
+    if preset["kind"] == "wrong":
+        assert any(preset["lie"].casefold() in d.casefold() for d in found), found
+    else:
+        assert found == [], found
+        carriers = {d.id for d in demo_city.devices if any(v.cve_id == adv.cve_id for v in d.vulns)}
+        assert {m.device_id for m in match_inventory(demo_city, adv)} == carriers  # empty = monitor

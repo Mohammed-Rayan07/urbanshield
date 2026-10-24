@@ -19,12 +19,13 @@ import logging
 import re
 from collections.abc import Callable
 from functools import lru_cache
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from urbanshield.config import DATA_DIR
-from urbanshield.schemas import CVE_PATTERN, Advisory
+from urbanshield.schemas import CVE_PATTERN, Advisory, City
 
 if TYPE_CHECKING:
     from urbanshield.agents.llm import LLM
@@ -149,14 +150,27 @@ def _contains(a: str, b: str) -> bool:
     return bool(a and b) and (a in b or b in a)
 
 
+def _version_pair(a: str, b: str) -> tuple[tuple[int, ...], tuple[int, ...]] | None:
+    """Both versions zero-padded to the same length (``4.2`` vs ``4.2.0``), or None if either
+    is malformed."""
+    if not (re.match(_VERSION, a) and re.match(_VERSION, b)):
+        return None
+    x, y = (tuple(int(p) for p in v.split(".")) for v in (a, b))
+    width = max(len(x), len(y))
+    return x + (0,) * (width - len(x)), y + (0,) * (width - len(y))
+
+
 def _same_version(a: str, b: str) -> bool:
     """Numeric compare with missing parts as zero, so ``4.2 == 4.2.0`` (as in the Sentinel).
     A malformed version never equals anything, so it surfaces as a discrepancy."""
-    if not (re.match(_VERSION, a) and re.match(_VERSION, b)):
-        return False
-    x, y = (tuple(int(p) for p in v.split(".")) for v in (a, b))
-    width = max(len(x), len(y))
-    return x + (0,) * (width - len(x)) == y + (0,) * (width - len(y))
+    pair = _version_pair(a, b)
+    return pair is not None and pair[0] == pair[1]
+
+
+def _below(version: str, bound: str) -> bool:
+    """Same rule as the Sentinel's matcher; a malformed version is never below anything."""
+    pair = _version_pair(version, bound)
+    return pair is not None and pair[0] < pair[1]
 
 
 def _feed_affected_below(record: dict[str, Any]) -> str | None:
@@ -168,8 +182,18 @@ def _feed_affected_below(record: dict[str, Any]) -> str | None:
     return match.group(1) if match else None
 
 
-def cross_check(advisory: Advisory, feed_lookup: Callable[[str], dict | None]) -> list[str]:
-    """Human-readable discrepancies against the pinned feed (empty list = consistent).
+def cross_check(
+    advisory: Advisory,
+    feed_lookup: Callable[[str], dict | None],
+    inventory: City | None = None,
+) -> list[str]:
+    """Human-readable discrepancies against the pinned sources (empty list = consistent).
+
+    The CVE must be in the pinned feed with the same CVSS. Where it runs is checked against
+    the city ``inventory`` when one is given: the twin pairs fictional firmware with real CVE
+    records, so the feed's vendor and version range describe the original product, while
+    the inventory says which firmware family and versions carry the CVE here. Without an
+    inventory, vendor, product and version range are checked against the feed record.
 
     Fails closed: a lookup error, a missing record or a record without the field being
     checked is a discrepancy, so the match goes to a human instead of passing silently."""
@@ -189,6 +213,9 @@ def cross_check(advisory: Advisory, feed_lookup: Callable[[str], dict | None]) -
     elif abs(advisory.cvss - feed_cvss) > CVSS_TOLERANCE:
         found.append(f"CVSS {advisory.cvss:g} differs from the feed's {feed_cvss:g}")
 
+    if inventory is not None:
+        return found + _check_inventory(advisory, inventory)
+
     for name in ("vendor", "product"):
         claimed, pinned = getattr(advisory, name), record.get(name)
         if not isinstance(pinned, str) or not pinned.strip():
@@ -204,11 +231,49 @@ def cross_check(advisory: Advisory, feed_lookup: Callable[[str], dict | None]) -
     return found
 
 
+def _check_inventory(advisory: Advisory, city: City) -> list[str]:
+    """Firmware family, vendor and affected range against the devices that list the CVE.
+
+    Device by device: every device that lists the CVE must fall in the advisory's range, and
+    no device in that family without it may (the Sentinel would plan for it)."""
+    cve, family, bound = advisory.cve_id, advisory.firmware_family.casefold(), advisory.affected_below
+    carriers, others = [], []  # (device id, family, version)
+    for d in city.devices:
+        f, _, v = d.firmware.partition("/")
+        (carriers if any(x.cve_id == cve for x in d.vulns) else others).append((d.id, f.casefold(), v))
+
+    def named(rows: list[tuple[str, str, str]]) -> str:
+        return ", ".join(f"{i} ({f} {v})" for i, f, v in rows)
+
+    covered = [r for r in others if r[1] == family and _below(r[2], bound)]
+    if not carriers:  # nothing here carries it: only a range that would still match devices is suspect
+        if not covered:
+            return []
+        return [
+            f"vendor/firmware family {advisory.firmware_family!r} below {bound} covers {named(covered)}, "
+            f"but no device in the inventory lists {cve}"
+        ]
+
+    families = sorted({f for _, f, _ in carriers})
+    if family not in families:
+        return [
+            f"vendor/firmware family {advisory.firmware_family!r}: the inventory lists {cve} only on "
+            f"{', '.join(families)}"
+        ]
+    found: list[str] = []
+    if not _contains(advisory.vendor, family):
+        found.append(f"vendor {advisory.vendor!r} does not match the firmware family {family!r}")
+    if missed := [r for r in carriers if r[1] == family and not _below(r[2], bound)]:
+        found.append(f"affected_below {bound} leaves out {named(missed)}, which list {cve}")
+    if covered:
+        found.append(f"affected_below {bound} also covers {named(covered)}, which do not list {cve}")
+    return found
+
+
 @lru_cache
-def load_presets() -> tuple[dict[str, Any], ...]:
-    """Judge Mode presets from ``data/advisories/index.json``, each with its raw ``text``."""
-    index = json.loads((ADVISORIES_DIR / "index.json").read_text(encoding="utf-8"))
+def load_presets(directory: Path = ADVISORIES_DIR) -> tuple[dict[str, Any], ...]:
+    """Judge Mode presets from ``<directory>/index.json``, each with its raw ``text``."""
+    index = json.loads((directory / "index.json").read_text(encoding="utf-8"))
     return tuple(
-        p | {"text": (ADVISORIES_DIR / f"{p['id']}.txt").read_text(encoding="utf-8")}
-        for p in index["presets"]
+        p | {"text": (directory / f"{p['id']}.txt").read_text(encoding="utf-8")} for p in index["presets"]
     )

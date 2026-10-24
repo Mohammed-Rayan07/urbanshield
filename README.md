@@ -22,7 +22,7 @@ Given a device inventory and a fixed budget in rupees, UrbanShield simulates how
 | **Agents decide, tools compute** | Every number comes from a deterministic tool (BFS, Monte Carlo simulator, CVaR MILP). Agents choose *what* to compute. |
 | **Red-Team agent** | After a plan is chosen, an attacker agent searches for strategies that break *that* plan. Holes force a re-plan. |
 | **The checker is not an LLM** | An Auditor in plain code rejects any claim that doesn't match a recorded tool result. |
-| **Prompt-injection quarantine** | Advisory text is reduced to a typed record before any planning agent sees it, then cross-checked against a pinned feed. |
+| **Prompt-injection quarantine** | Advisory text is reduced to a typed record before any planning agent sees it, then cross-checked against the pinned KEV feed (CVSS) and the city inventory (which firmware actually carries the CVE). |
 | **Tamper-evident** | Every agent action goes to a SHA-256 hash chain with Ed25519 signatures. |
 | **Honest numbers** | Plans are scored on held-out scenarios with bootstrap CIs, against CVSS-first, BFS-only and mean-loss baselines under the same budget. |
 
@@ -78,9 +78,12 @@ cd backend && uv run pytest        # property tests: feasibility, CVaR maths, ha
 - **Tail truncation** (deleting the newest log rows) is detected only against a head this server has already
   published (`/api/audit/verify`, and the head carried by every apply event). Production would anchor heads in an
   external transparency log or notary.
-- The quarantine is structural: raw advisory text reaches one tool-less extraction call and nothing else, and
-  extracted fields are cross-checked against the pinned feed. A lie the feed cannot contradict (for example a
-  version range the feed does not state) still needs the human approval step.
+- The quarantine is structural: raw advisory text reaches one tool-less extraction call and nothing else. The
+  extracted CVSS is checked against the pinned feed, and the firmware family and version range device by device
+  against the inventory. Fields nothing pinned can contradict (the product name) drive no decision.
+- The planner treats the savings of different controls as additive (each calibrated by re-simulation); the
+  overlap makes its predictions optimistic, which docs/EVALS.md reports as the model gap. Every reported number
+  is the full simulator's, on held-out scenarios.
 - The approval role header and the run registry are in-memory demo mechanisms; a restart forgets running incidents.
 
 ## Scope and ethics

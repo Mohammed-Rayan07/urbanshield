@@ -54,7 +54,7 @@ def _extract(messages: list[dict[str, Any]]) -> tuple[str | None, list[ToolCallR
             r"(?:prior to|before|below|earlier than|<)\s*(?:version\s*)?v?(\d+(?:\.\d+){0,3})", text
         ),
         "cvss": _first(
-            r"CVSS(?:\s*v?\d(?:\.\d)?)?(?:\s*base)?(?:\s*score)?\s*[:=]?\s*(\d{1,2}(?:\.\d)?)", text
+            r"CVSS(?:\s*v\d(?:\.\d)?)?(?:\s*base)?(?:\s*score)?\s*[:=]?\s*(\d{1,2}(?:\.\d)?)", text
         ),
     }
     return json.dumps(fields, sort_keys=True), []

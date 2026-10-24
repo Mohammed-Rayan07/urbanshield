@@ -32,7 +32,7 @@ from urbanshield.schemas import (
 
 EPS = 1e-9
 FREE_BONUS = 1e6  # a swap that saves money and lowers CVaR beats any paid move
-BLOCK = 256  # candidates evaluated exactly per batch
+BLOCK = 64  # candidates evaluated exactly per batch
 
 
 def _score(drop: np.ndarray, d_cost: np.ndarray) -> np.ndarray:
@@ -51,6 +51,7 @@ def greedy_tail(
     limits = effective_budget(budget, constraints)
     table = option_table(city, losses, constraints)
     s, m = table.saved.shape
+    rows = np.ascontiguousarray(table.saved.T)  # (M, S): one option per row, cheap to gather
     k = tail_size(s, limits.alpha)
 
     current = np.full(len(city.devices), -1)  # chosen option per device (-1 = none)
@@ -69,7 +70,7 @@ def greedy_tail(
         if cost + table.cost[j] <= limits.inr and downtime + table.downtime[j] <= limits.downtime_h:
             current[table.device[j]] = j
             cost, downtime = cost + table.cost[j], downtime + table.downtime[j]
-            loss -= table.saved[:, j]
+            loss -= rows[j]
 
     while m:
         held = current[table.device]  # option currently held by each candidate's device
@@ -86,7 +87,8 @@ def greedy_tail(
             break
         now = cvar(loss, limits.alpha)
         tail = np.argpartition(loss, s - k)[-k:] if k < s else np.arange(s)
-        gain_tail = table.saved[tail].mean(axis=0) - np.where(has, table.saved[tail][:, safe].mean(axis=0), 0)
+        tail_mean = rows[:, tail].mean(axis=1)
+        gain_tail = tail_mean - np.where(has, tail_mean[safe], 0.0)
         bound = np.where(ok & (gain_tail > EPS), _score(gain_tail, d_cost), -np.inf)
 
         order = np.argsort(-bound, kind="stable")
@@ -96,10 +98,10 @@ def greedy_tail(
             block = block[bound[block] > max(best_score, 0.0)]
             if block.size == 0:
                 break
-            diff = table.saved[:, block] - np.where(has[block], 1, 0) * table.saved[:, safe[block]]
-            cand = loss[:, None] - diff
-            tail_part = np.partition(cand, s - k, axis=0)[-k:] if k < s else cand
-            cand_cvar = tail_part.mean(axis=0)
+            diff = rows[block] - has[block, None] * rows[safe[block]]
+            cand = loss[None, :] - diff
+            tail_part = np.partition(cand, s - k, axis=1)[:, -k:] if k < s else cand
+            cand_cvar = tail_part.mean(axis=1)
             scores = np.where(now - cand_cvar > EPS, _score(now - cand_cvar, d_cost[block]), -np.inf)
             top = int(np.argmax(scores))
             if scores[top] > best_score:
@@ -108,8 +110,8 @@ def greedy_tail(
             break
         i = table.device[best]
         if current[i] >= 0:
-            loss += table.saved[:, current[i]]
-        loss -= table.saved[:, best]
+            loss += rows[current[i]]
+        loss -= rows[best]
         cost, downtime = cost + d_cost[best], downtime + d_down[best]
         current[i] = best
 

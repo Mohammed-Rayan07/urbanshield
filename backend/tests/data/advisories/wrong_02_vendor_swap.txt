@@ -1,0 +1,10 @@
+Trafikon field notice TFN-2025-09
+
+Vendor: Trafikon
+Product: TS-7 traffic signal controller
+CVE: CVE-2025-31337
+CVSS base score 6.1
+
+The TS-7 management service accepts unauthenticated configuration writes. Applies to the
+trafikon firmware family below 7.3.0. Operators should take signal controllers offline for
+an immediate update.

@@ -112,6 +112,14 @@ def test_must_fix_and_forbid(tiny_city, losses, tiny_budget) -> None:
     assert ControlKind.SEGMENT not in plan.choices.values()
 
 
+def test_time_limited_milp_is_never_worse_than_greedy(tiny_city, losses, tiny_budget) -> None:
+    rushed = solve(tiny_city, losses, tiny_budget, objective=Objective.CVAR, time_limit_s=1e-3)
+    heuristic = greedy_tail(tiny_city, losses, tiny_budget)
+    assert is_feasible(tiny_city, rushed, tiny_budget)
+    a = _linear_cvar(tiny_city, losses, rushed, tiny_budget.alpha)
+    assert a <= _linear_cvar(tiny_city, losses, heuristic, tiny_budget.alpha) + 1e-6
+
+
 @pytest.mark.slow
 def test_compare_runs_everything() -> None:
     from urbanshield.city.generator import generate_city

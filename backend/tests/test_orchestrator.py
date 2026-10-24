@@ -7,13 +7,13 @@ from dataclasses import replace
 
 import pytest
 
-from fakes import ScriptedLLM, SpyLLM, make_ctx, reply
+from fakes import TEST_ADVISORIES, ScriptedLLM, SpyLLM, make_ctx, reply
 from urbanshield.agents.mock import MockLLM
 from urbanshield.agents.orchestrator import ApprovalDecision, ApprovalGate, run_incident
 from urbanshield.guard.quarantine import load_presets
 from urbanshield.schemas import AgentName, Autonomy, EventKind
 
-PRESETS = {p["id"]: p["text"] for p in load_presets()}
+PRESETS = {p["id"]: p["text"] for p in load_presets(TEST_ADVISORIES)}
 FESTIVAL = "Z1 festival this weekend, no streetlight downtime"
 
 

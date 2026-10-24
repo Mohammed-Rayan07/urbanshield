@@ -94,11 +94,14 @@ def run_sentinel(ctx: RunContext, raw_text: str) -> SentinelResult | None:
     if discrepancies:
         decision = "needs_approval"
         summary = (
-            f"{advisory.cve_id}: {len(discrepancies)} discrepancies with the pinned feed → needs approval"
+            f"{advisory.cve_id}: {tools.count(len(discrepancies), 'discrepancy')} with the pinned sources "
+            "→ needs approval"
         )
     elif matches:
         decision = "escalate"
-        summary = f"{advisory.cve_id}: {len(matches)} devices affected → escalate to the Analyst"
+        summary = (
+            f"{advisory.cve_id}: {tools.count(len(matches), 'device')} affected → escalate to the Analyst"
+        )
     else:
         decision = "monitor"
         summary = f"{advisory.cve_id}: no device in the inventory is affected → monitor"

@@ -469,7 +469,8 @@ def create_app(
         finally:
             previews.release()
         if advisory is not None:
-            discrepancies = quarantine.cross_check(advisory, engine.feed_record)
+            inventory = the_city() if is_live else None  # placeholder inventory proves nothing
+            discrepancies = quarantine.cross_check(advisory, engine.feed_record, inventory)
         return QuarantinePreview(
             source_sha256=quarantine.sha256_text(text),
             flagged_spans=quarantine.flag_spans(text),

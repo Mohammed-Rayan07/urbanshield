@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from fakes import SpyLLM, fake_engine, make_ctx
+from fakes import TEST_ADVISORIES, SpyLLM, fake_engine, make_ctx
 from urbanshield.agents.mock import MockLLM
 from urbanshield.agents.sentinel import match_inventory, parse_version, run_sentinel, version_below
 from urbanshield.guard.quarantine import load_presets, sha256_text
 from urbanshield.schemas import Advisory, AgentName, EventKind
 
-PRESETS = {p["id"]: p for p in load_presets()}
+PRESETS = {p["id"]: p for p in load_presets(TEST_ADVISORIES)}
 
 
 def _adv(**overrides) -> Advisory:

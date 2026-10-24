@@ -54,6 +54,13 @@ class ToolArgError(ValueError):
     """The arguments for a tool call did not validate."""
 
 
+def count(n: int, noun: str) -> str:
+    """``count(1, "hole")`` -> ``"1 hole"``, ``count(2, "strategy")`` -> ``"2 strategies"``."""
+    if n == 1:
+        return f"1 {noun}"
+    return f"{n} {noun[:-1]}ies" if noun.endswith("y") and noun[-2:-1] not in "aeiou" else f"{n} {noun}s"
+
+
 def dumps(value: Any) -> str:
     """Canonical JSON for prompts: sorted keys, no whitespace, so identical runs send identical bytes."""
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
@@ -266,7 +273,7 @@ def _advisory(a: AdvisoryArgs) -> Advisory:
 def _t_cross_check(ctx: RunContext, a: AdvisoryArgs) -> dict[str, Any]:
     from urbanshield.guard.quarantine import cross_check
 
-    return {"discrepancies": cross_check(_advisory(a), ctx.engine.feed_record)}
+    return {"discrepancies": cross_check(_advisory(a), ctx.engine.feed_record, ctx.city)}
 
 
 def _t_match_inventory(ctx: RunContext, a: AdvisoryArgs) -> dict[str, Any]:
@@ -539,7 +546,7 @@ def _describe(tool: str, args: Args, result: dict[str, Any]) -> str:
             hit = result["p_corridor_compromised"]
             return f"simulate → CVaR95 {result['cvar95']:.2f}, corridor hit in {hit:.0%} of scenarios"
         case "compare":
-            return f"compare → {len(result['plans'])} plans under the same budget"
+            return f"compare → {count(len(result['plans']), 'plan')} under the same budget"
         case "optimize":
             return f"optimize → {result['plan_id']}"
         case "simulate_strategy":
@@ -560,7 +567,11 @@ def _describe(tool: str, args: Args, result: dict[str, Any]) -> str:
             return f"list_controls({result['plan_id']}) → {n} exposed devices without a control"
         case "cross_check":
             n = len(result["discrepancies"])
-            return "cross_check vs pinned feed → consistent" if n == 0 else f"cross_check → {n} discrepancies"
+            return (
+                "cross_check vs pinned feed and inventory → consistent"
+                if n == 0
+                else f"cross_check → {count(n, 'discrepancy')}"
+            )
         case _:
             return tool
 

@@ -45,6 +45,10 @@ from urbanshield.schemas import (
 )
 from urbanshield.sim import montecarlo
 
+# Presets written for this fake world (tiny_city + FAKE_FEED). The shipped presets in
+# data/advisories are written for the real demo twin and are tested against it.
+TEST_ADVISORIES = Path(__file__).parent / "data" / "advisories"
+
 FAKE_FEED: dict[str, dict[str, Any]] = {
     "CVE-2025-31337": {
         "cve_id": "CVE-2025-31337",

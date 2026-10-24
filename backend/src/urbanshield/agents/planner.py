@@ -224,7 +224,8 @@ def audit_claims(ctx: RunContext, source: ToolResult) -> list[str]:
     ctx.event(
         AgentName.AUDITOR,
         EventKind.DECISION,
-        f"Auditor: {len(verdict.accepted)} claims verified against {source.id}, {len(rejected)} rejected"
+        f"Auditor: {tools.count(len(verdict.accepted), 'claim')} verified against {source.id}, "
+        f"{len(rejected)} rejected"
         if total
         else "Auditor: the planner made no checkable claims",
         {
@@ -259,7 +260,8 @@ def run_planner(ctx: RunContext, constraints_text: str | None) -> Plan:
     ctx.event(
         AgentName.PLANNER,
         EventKind.DECISION,
-        f"Candidate {candidate.id}: {len(candidate.choices)} controls, {inr(candidate.cost_inr)}, "
+        f"Candidate {candidate.id}: {tools.count(len(candidate.choices), 'control')}, "
+        f"{inr(candidate.cost_inr)}, "
         f"{candidate.downtime_h:g} h downtime",
         {"plan": candidate.model_dump(mode="json"), "constraints": [c.model_dump() for c in ctx.constraints]},
         tool_call_id=record.id,

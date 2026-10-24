@@ -225,7 +225,7 @@ def _apply(ctx: RunContext, approvals: Approvals, timeout_s: float, residual: li
             "downtime_h": downtime,
             "residual_holes": residual,
         }
-        ask = f"Approval needed: {len(manual)} controls with downtime in {plan.id} "
+        ask = f"Approval needed: {tools.count(len(manual), 'control')} with downtime in {plan.id} "
         ask += f"({inr(cost)}, {downtime:g} h)"
         if _human(ctx, approvals, request, timeout_s, ask):
             ctx.applied.update(manual)
@@ -279,7 +279,8 @@ def run_incident(
         _apply(ctx, approvals, timeout_s, [h.model_dump() for h in outcome.residual])
         _finish(
             ctx,
-            f"Run complete: {len(ctx.applied)} controls in place, {len(outcome.holes_found)} holes found",
+            f"Run complete: {tools.count(len(ctx.applied), 'control')} in place, "
+            f"{tools.count(len(outcome.holes_found), 'hole')} found",
             {"applied": {d: k.value for d, k in sorted(ctx.applied.items())}, "plan_id": ctx.candidate.id},
         )
     except _Stop:

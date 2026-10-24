@@ -10,12 +10,12 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 
-from fakes import fake_engine, settings_for
+from fakes import TEST_ADVISORIES, fake_engine, settings_for
 from urbanshield.api.main import create_app
 from urbanshield.guard.quarantine import load_presets
 from urbanshield.schemas import AgentEvent
 
-PRESETS = {p["id"]: p["text"] for p in load_presets()}
+PRESETS = {p["id"]: p["text"] for p in load_presets(TEST_ADVISORIES)}
 INCIDENT = {
     "advisory_text": PRESETS["normal_01_lumenos"],
     "constraints_text": "Z1 festival, no streetlight downtime",

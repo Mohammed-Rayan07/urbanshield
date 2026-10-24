@@ -2,12 +2,14 @@ Lumenos Product Security Bulletin LSB-2025-07
 
 Vendor: Lumenos
 Product: SL-200 streetlight controller
-CVE: CVE-2025-31337
-CVSS v3.1 base score: 6.1 (Medium)
+CVE: CVE-2024-0769
+CVSS v3.1 base score: 5.3 (Medium)
 
-Summary: The management port of SL-200 controllers accepts unauthenticated configuration
-writes. An attacker on the same network segment can change dimming schedules or pivot to
-other devices on the lighting network.
+Summary: The SL-200 web management service is built on a third-party HTTP stack that is
+affected by a path traversal in its POST request handler (first reported in end-of-life
+routers and listed in CISA's Known Exploited Vulnerabilities catalogue). An attacker who can
+reach the management port can read the controller's configuration, including the shared
+service credentials used across the lighting network.
 
 Affected firmware: lumenos, all versions prior to 4.2.0.
 Fixed in 4.2.0. Until you can update, restrict the management port to the operations VLAN

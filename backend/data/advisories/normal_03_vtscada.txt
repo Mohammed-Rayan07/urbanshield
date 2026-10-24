@@ -1,0 +1,11 @@
+ICS advisory (republished for municipal operators)
+
+Vendor: Trihedral
+Product: VTScada HMI server
+CVE: CVE-2016-4523
+CVSS base score 7.5
+
+The VTScada web access interface can be crashed remotely with crafted requests, taking the
+operator displays offline until the service restarts. It is listed in CISA's Known Exploited
+Vulnerabilities catalogue. Affected firmware: vtscada, versions before 11.2.02. Sites that
+run VTScada should update and keep the web interface off public networks.

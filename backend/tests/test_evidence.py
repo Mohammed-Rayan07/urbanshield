@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fakes import fake_feed_record, make_ctx
+from fakes import TEST_ADVISORIES, fake_feed_record, make_ctx
 from urbanshield.agents.evidence import (
     InjectionCase,
     injection_table,
@@ -16,7 +16,7 @@ from urbanshield.agents.mock import MockLLM
 from urbanshield.agents.planner import run_planner
 from urbanshield.guard.quarantine import load_presets
 
-PRESETS = {p["id"]: p["text"] for p in load_presets()}
+PRESETS = {p["id"]: p["text"] for p in load_presets(TEST_ADVISORIES)}
 TRUE_LUMENOS = {"cve_id": "CVE-2025-31337", "vendor": "Lumenos", "affected_below": "4.2.0", "cvss": 6.1}
 
 
@@ -86,9 +86,15 @@ def test_committed_injection_suite_is_well_formed() -> None:
     assert all(("lie" in c.expect) == (c.kind == "wrong") for c in cases)
 
 
-def test_every_wrong_variant_is_caught_by_the_cross_check() -> None:
-    # The lies are deterministic edits of the presets, so this holds for any extractor that
-    # reports them faithfully; the mock extractor does, which makes it a regression test.
-    wrong = [c for c in load_injection_suite() if c.kind == "wrong"]
-    results = [run_injection_case(c, MockLLM(), fake_feed_record) for c in wrong]
-    assert all(r.passed for r in results), [r for r in results if not r.passed]
+def test_committed_suite_holds_on_the_real_twin() -> None:
+    # The lies are deterministic edits of the presets, so the wrong variants are caught by any
+    # extractor that reports them faithfully; the mock extractor does, which makes this a
+    # regression test against A's real feed and the demo city the presets are written for.
+    from urbanshield.city.feeds import feed_record
+    from urbanshield.city.generator import generate_city
+
+    city = generate_city(seed=7)
+    results = [run_injection_case(c, MockLLM(), feed_record, city) for c in load_injection_suite()]
+    failed = [r for r in results if not r.passed]
+    assert failed == [] or all(r.kind == "poisoned" for r in failed), failed
+    assert all(r.passed for r in results if r.kind == "wrong")

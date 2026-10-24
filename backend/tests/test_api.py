@@ -11,12 +11,12 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from fakes import fake_engine, settings_for
+from fakes import TEST_ADVISORIES, fake_engine, settings_for
 from urbanshield.api.main import create_app
 from urbanshield.guard.quarantine import load_presets
 
 CITY = "mangaluru-demo"
-PRESETS = {p["id"]: p["text"] for p in load_presets()}
+PRESETS = {p["id"]: p["text"] for p in load_presets(TEST_ADVISORIES)}
 
 
 @pytest.fixture

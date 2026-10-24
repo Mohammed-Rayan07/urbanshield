@@ -1,0 +1,11 @@
+DECORLITE SECURITY NOTICE DSN-26-003
+
+Manufacturer: Decorlite
+Model: DL-1 decorative lighting controller
+Identifier: CVE-2026-34909, CVSS 10.0
+
+The DL-1 ships a bundled network management agent with a path traversal flaw that lets
+anyone on the network read and change files on the controller, up to taking over its local
+account. Controllers running decorlite firmware before 1.1.0 are affected; 1.1.0 removes the
+agent. DL-1 units only drive festive and facade lighting and have no network links to other
+city systems.

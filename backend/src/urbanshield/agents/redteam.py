@@ -243,7 +243,7 @@ def propose_strategies(ctx: RunContext, history: list[dict[str, Any]]) -> list[S
     ctx.event(
         AgentName.REDTEAM,
         EventKind.DECISION,
-        f"Red-Team will try {len(chosen)} strategies against {view.result['plan_id']}",
+        f"Red-Team will try {tools.count(len(chosen), 'strategy')} against {view.result['plan_id']}",
         {"strategies": [s.model_dump() | {"label": describe(s)} for s in chosen]},
         tool_call_id=view.id,
         usage=response.usage,
@@ -317,7 +317,7 @@ def run_redteam(ctx: RunContext) -> RedTeamOutcome:
         found += [p.to_hole() for _, p in holes]
         if not holes:
             after = " after replan" if round_no > 1 else ""
-            tried = f"{len(strategies)} strategies"
+            tried = tools.count(len(strategies), "strategy")
             ctx.event(
                 AgentName.REDTEAM,
                 EventKind.DECISION,
@@ -336,7 +336,8 @@ def run_redteam(ctx: RunContext) -> RedTeamOutcome:
         ctx.event(
             AgentName.REDTEAM,
             EventKind.DECISION,
-            f"{len(residual)} holes remain: {why}; flagged for the approver",
+            f"{tools.count(len(residual), 'hole')} {'remains' if len(residual) == 1 else 'remain'}: {why}; "
+            "flagged for the approver",
             {"residual": [h.model_dump() for h in residual], "sim_calls": ctx.redteam_sim_calls},
         )
         return RedTeamOutcome(rounds=round_no, holes_found=found, residual=residual)
