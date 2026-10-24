@@ -4,7 +4,7 @@ The snapshot lives in ``data/feeds/feed_snapshot.json`` and its SHA-256 in
 ``data/feeds/feed_snapshot.sha256``. The default snapshot's digest is **also pinned in
 code** (``FEED_SHA256``): the sidecar sits next to the data, so on its own it only catches
 accidental or partial edits; the in-code pin means swapping both files still fails, and any
-change to the pin shows up in code review. Every read is verified and fails closed: a
+change to the pin shows up in code review. Every read re-hashes both files and fails closed: a
 missing, altered or malformed feed raises ``FeedIntegrityError``; nothing falls back to
 unverified data.
 
@@ -76,34 +76,35 @@ def feed_record(
 
 
 def _records(path: Path, hash_path: Path) -> dict[str, dict[str, Any]]:
-    """Verified records keyed by CVE id; re-verified whenever either file changes."""
+    """Verified records keyed by CVE id. Both files are read and the digest checked on every
+    call (the snapshot is ~20 KB); only the parse of an already-verified digest is cached.
+    The in-code pin applies to the default snapshot; other paths (tests) rely on the sidecar."""
     try:
-        data_stat, pin_stat = path.stat(), hash_path.stat()
+        data, pin = path.read_bytes(), hash_path.read_bytes()
     except FileNotFoundError as exc:
         raise FeedIntegrityError(f"missing feed or its pin: {exc.filename}") from exc
-    stamp = (data_stat.st_mtime_ns, data_stat.st_size, pin_stat.st_mtime_ns, pin_stat.st_size)
-    return _verified(path.resolve(), hash_path.resolve(), stamp)
-
-
-@lru_cache(maxsize=8)
-def _verified(path: Path, hash_path: Path, _stamp: tuple[int, ...]) -> dict[str, dict[str, Any]]:
-    data = path.read_bytes()  # read once: hash and parse the same bytes
     actual = hashlib.sha256(data).hexdigest()
-    words = hash_path.read_bytes().decode("ascii", errors="replace").split()
+    words = pin.decode("ascii", errors="replace").split()
     expected = words[0].lower() if words else ""
     if not _HEX64.fullmatch(expected):
         raise FeedIntegrityError(f"malformed feed pin: {hash_path.name}")
     if not hmac.compare_digest(expected, actual):
         raise FeedIntegrityError(f"{path.name} does not match its pin ({expected[:12]}… ≠ {actual[:12]}…)")
-    if path == FEED_PATH.resolve() and not hmac.compare_digest(FEED_SHA256, actual):
+    if path.resolve() == FEED_PATH.resolve() and not hmac.compare_digest(FEED_SHA256, actual):
         raise FeedIntegrityError(f"{path.name} does not match FEED_SHA256 pinned in city/feeds.py")
+    return _parse(data, path.name)
+
+
+@lru_cache(maxsize=8)
+def _parse(data: bytes, name: str) -> dict[str, dict[str, Any]]:
+    """Parse already-verified bytes; identical content is parsed once."""
     try:
         by_id: dict[str, dict[str, Any]] = {}
         for record in json.loads(data)["records"]:
             cve_id = record["cve_id"]
             if cve_id in by_id:
-                raise FeedIntegrityError(f"duplicate record for {cve_id} in {path.name}")
+                raise FeedIntegrityError(f"duplicate record for {cve_id} in {name}")
             by_id[cve_id] = record
     except (json.JSONDecodeError, UnicodeDecodeError, KeyError, TypeError) as exc:
-        raise FeedIntegrityError(f"invalid feed snapshot {path.name}: {exc}") from exc
+        raise FeedIntegrityError(f"invalid feed snapshot {name}: {exc}") from exc
     return by_id

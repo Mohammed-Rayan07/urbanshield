@@ -71,27 +71,39 @@ def _gunzip(data: bytes) -> bytes:
 
 
 def _load_kev() -> list[Record]:
-    rows = json.loads(_download(CISA_KEV_URL)).get("vulnerabilities", [])
+    catalogue = json.loads(_download(CISA_KEV_URL))
+    if "vulnerabilities" not in catalogue:
+        raise RuntimeError("CISA KEV schema changed: no 'vulnerabilities' key")
     return [
         row
-        for row in rows
-        if row.get("vendorProject") in IOT_OT_VENDORS and CVE_ID.match(str(row.get("cveID", "")))
+        for row in catalogue["vulnerabilities"]
+        if row.get("vendorProject") in IOT_OT_VENDORS and CVE_ID.fullmatch(str(row.get("cveID", "")))
     ]
 
 
 def _load_epss() -> dict[str, float]:
     text = _gunzip(_download(EPSS_URL)).decode("utf-8", errors="replace")
-    lines = (line for line in io.StringIO(text) if not line.startswith("#"))
-    return {row["cve"]: float(row["epss"]) for row in csv.DictReader(lines) if row.get("cve")}
+    reader = csv.DictReader(line for line in io.StringIO(text) if not line.startswith("#"))
+    if not {"cve", "epss"} <= set(reader.fieldnames or ()):
+        raise RuntimeError(f"EPSS schema changed: columns are {reader.fieldnames}")
+    scores = {row["cve"]: float(row["epss"]) for row in reader if row.get("cve")}
+    if not scores:
+        raise RuntimeError("EPSS file contained no scores")
+    return scores
 
 
 def _nvd(cve_id: str, cache_dir: Path) -> Record | None:
-    """CVSS base score + English summary from NVD, cached on disk. Network failures are
-    reported, never silently dropped; the rate-limit delay applies to every network call."""
+    """CVSS base score + English summary from NVD, cached on disk. Every skip is reported,
+    the rate-limit delay applies to every network call, and only well-formed responses are
+    cached (a 200 "rate limited" body must not poison later runs)."""
     cached = cache_dir / f"{cve_id}.json"
+    payload: Record | None = None
     if cached.exists():
-        payload = json.loads(cached.read_text(encoding="utf-8"))
-    else:
+        try:
+            payload = json.loads(cached.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            cached.unlink()  # corrupt cache entry: refetch below
+    if payload is None:
         try:
             payload = json.loads(_download(NVD_URL.format(cve_id)))
         except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
@@ -99,9 +111,13 @@ def _nvd(cve_id: str, cache_dir: Path) -> Record | None:
             return None
         finally:
             time.sleep(NVD_DELAY_SECONDS)
+        if "vulnerabilities" not in payload:
+            print(f"  skip {cve_id}: unexpected NVD response {str(payload)[:80]}", file=sys.stderr)
+            return None
         cached.write_text(json.dumps(payload), encoding="utf-8", newline="\n")
     items = payload.get("vulnerabilities", [])
     if not items:
+        print(f"  skip {cve_id}: not found on NVD", file=sys.stderr)
         return None
     cve = items[0].get("cve", {})
     metrics = cve.get("metrics", {})
@@ -111,6 +127,7 @@ def _nvd(cve_id: str, cache_dir: Path) -> Record | None:
             descriptions = cve.get("descriptions", [])
             summary = next((d.get("value", "") for d in descriptions if d.get("lang") == "en"), "")
             return {"cvss": float(data["baseScore"]), "summary": summary}
+    print(f"  skip {cve_id}: NVD record has no CVSS base score", file=sys.stderr)
     return None
 
 
@@ -121,7 +138,8 @@ def _band(cvss: float) -> str:
 def select_balanced(records: list[Record], limit: int) -> list[Record]:
     """Deterministic pick: round-robin over vendors within each CVSS band, newest first, so no
     vendor dominates and every band the demo needs (medium shared-firmware CVEs, critical
-    decoys) is represented."""
+    decoys) is represented. KEV lists few medium-severity IoT entries, so a band short of its
+    quota takes all it has and the remainder is filled from the other bands, newest first."""
     quota = {"medium": limit * 3 // 10, "high": limit * 4 // 10}
     quota["critical"] = limit - sum(quota.values())
     newest_first = sorted(records, key=lambda r: r["cve_id"], reverse=True)
@@ -155,6 +173,9 @@ def build_snapshot(limit: int, cache_dir: Path) -> tuple[Path, str]:
     epss = _load_epss()
     records: list[Record] = []
     for row in _load_kev():
+        if row["cveID"] not in epss:
+            print(f"  skip {row['cveID']}: no EPSS score", file=sys.stderr)  # never invent a 0.0
+            continue
         nvd = _nvd(row["cveID"], cache_dir)
         if nvd is None or not 4.0 <= nvd["cvss"] <= 10.0:
             continue
@@ -162,7 +183,7 @@ def build_snapshot(limit: int, cache_dir: Path) -> tuple[Path, str]:
             {
                 "cve_id": row["cveID"],
                 "cvss": nvd["cvss"],
-                "epss": round(epss.get(row["cveID"], 0.0), 5),
+                "epss": round(epss[row["cveID"]], 5),
                 "kev": True,
                 "vendor": row["vendorProject"],
                 "product": row["product"],

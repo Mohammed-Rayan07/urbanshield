@@ -224,15 +224,25 @@ def test_duplicate_records_are_refused(tmp_path) -> None:
 
 
 def test_committed_snapshot_matches_code_pin() -> None:
-    assert len(load_feed()) == 40
+    from urbanshield.city.feeds import FEED_HASH_PATH, FEED_PATH, FEED_SHA256
+
+    assert sha256_file(FEED_PATH) == FEED_SHA256
+    assert FEED_HASH_PATH.read_text(encoding="utf-8").split()[0] == FEED_SHA256
+    assert len(load_feed()) >= 30
+
+
+def test_too_small_for_the_demo_structure_raises() -> None:
+    with pytest.raises(ValueError, match="at least"):
+        generate_city(n_devices=20)
 
 
 @pytest.mark.slow
 def test_scales_to_5000_devices() -> None:
     import time
 
-    t = time.perf_counter()
     big = generate_city(seed=1, n_devices=5000)
-    centrality = reach_centrality(build_graphs(big))
+    graphs = build_graphs(big)
+    t = time.perf_counter()
+    centrality = reach_centrality(graphs)  # was 34 s with a per-node Python BFS
     assert len(big.devices) == len(centrality) == 5000
-    assert time.perf_counter() - t < 10
+    assert time.perf_counter() - t < 5

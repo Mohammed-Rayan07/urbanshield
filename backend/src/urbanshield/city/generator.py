@@ -65,6 +65,9 @@ DECOY_TAG = "decorative"
 GATEWAY_TAG = "gateway"
 N_CORRIDOR = 4
 EXPOSURE_RATE = 0.12
+FAMILY_SHARE, MIN_FAMILY = 0.6, 10  # of streetlights
+DECOY_SHARE, MIN_DECOYS = 0.15, 3  # of streetlights
+MIN_DEVICES = 40  # smallest city that holds the whole demo structure
 
 # Zone centres, north to south; NH-66 runs through them towards the district hospital.
 ZONE_CENTRES = {
@@ -109,7 +112,7 @@ class _Layout:
     devices: list[Device] = field(default_factory=list)
     family: list[str] = field(default_factory=list)
     corridor: list[str] = field(default_factory=list)
-    gateways: list[str] = field(default_factory=list)
+    gateways: list[tuple[str, str]] = field(default_factory=list)  # (device id, zone)
     networks: dict[tuple[str, Category], list[str]] = field(default_factory=dict)  # decoys excluded
 
 
@@ -119,8 +122,8 @@ def generate_city(
     feed: dict[str, Vulnerability] | None = None,
 ) -> City:
     """Build the city twin from the pinned feed (or ``feed``, if given)."""
-    if n_devices < 1:
-        raise ValueError("n_devices must be positive")
+    if n_devices < MIN_DEVICES:
+        raise ValueError(f"the demo structure needs at least {MIN_DEVICES} devices, got {n_devices}")
     rng = np.random.default_rng(seed)
     layout = _place_devices(rng, n_devices, _roles(_resolve_feed(feed)))
     return City(
@@ -188,8 +191,8 @@ def _category_counts(n_devices: int) -> dict[Category, int]:
 def _place_devices(rng: np.random.Generator, n_devices: int, roles: _Roles) -> _Layout:
     counts = _category_counts(n_devices)
     lights = counts[Category.STREETLIGHT]
-    n_family = min(lights, max(10 if lights >= 10 else 1, int(lights * 0.6 + 0.5)))
-    n_decoy = min(lights - n_family, max(3 if lights - n_family >= 3 else 0, int(lights * 0.15 + 0.5)))
+    n_family = max(MIN_FAMILY, int(lights * FAMILY_SHARE + 0.5))
+    n_decoy = max(MIN_DECOYS, int(lights * DECOY_SHARE + 0.5))
     zones = tuple(ZONE_CENTRES)
     layout = _Layout()
 
@@ -223,7 +226,7 @@ def _place_devices(rng: np.random.Generator, n_devices: int, roles: _Roles) -> _
                 criticality = 0.85  # substation head-end meter
             elif category is Category.EV_CHARGER and k < len(zones):
                 tags.append(GATEWAY_TAG)  # first charger of each zone hosts the depot backhaul
-                layout.gateways.append(device_id)
+                layout.gateways.append((device_id, zone))
 
             if on_network:
                 layout.networks.setdefault((zone, category), []).append(device_id)
@@ -332,14 +335,14 @@ def _edges(layout: _Layout) -> list[Edge]:
         link(a, b, both=True)
 
     zones = tuple(ZONE_CENTRES)
-    for k, gateway in enumerate(layout.gateways):  # gateways are the only bridges between networks
-        zone = zones[k % len(zones)]  # gateway k is the first charger of zone k
+    for gateway, zone in layout.gateways:  # gateways are the only bridges between networks
         if lights := layout.networks.get((zone, Category.STREETLIGHT)):
             link(lights[0], gateway)
         if meters := layout.networks.get((zone, Category.METER)):
             link(gateway, meters[0])
     if layout.family and layout.corridor:
-        for k, gateway in enumerate(layout.gateways[:2]):
+        # Two bridges, entered from opposite ends of the family's management network.
+        for k, (gateway, _) in enumerate(layout.gateways[:2]):
             link(layout.family[-1 if k == 0 else 0], gateway)
             link(gateway, layout.corridor[min(k, len(layout.corridor) - 1)])
 
