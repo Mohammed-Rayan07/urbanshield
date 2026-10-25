@@ -89,6 +89,8 @@ class RunContext:
     redteam_seed: int = 3  # probe scenarios: neither the training nor the test seed
     redteam_sim_calls: int = 0  # simulator calls spent by the Red-Team (outcome-verification metric)
     redteam_baselines: dict[str, ScenarioLosses] = field(default_factory=dict)  # plan id -> scenarios
+    # Approval path -> Enforcer: (plan id, applied controls) -> report. None = plan in the twin only.
+    enforce: Callable[[str, dict[str, ControlKind]], dict[str, Any]] | None = None
     _tool_seq: itertools.count = field(default_factory=lambda: itertools.count(1))
     _event_seq: itertools.count = field(default_factory=lambda: itertools.count(1))
     _graphs: Any = None

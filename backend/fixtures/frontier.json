@@ -1,0 +1,135 @@
+{
+ "city_id": "mangaluru-demo",
+ "downtime_h": 24.0,
+ "n_scenarios": 2000,
+ "test_seed": 2,
+ "generated_by": "scripts/build_frontier.py",
+ "points": [
+  {
+   "budget_inr": 50000,
+   "cvar": {
+    "cvar": 10.8216,
+    "mean": 12.0134,
+    "cvss": 18.7977,
+    "bfs_centrality": 16.3203
+   },
+   "cost_inr": {
+    "cvar": 49984,
+    "mean": 49207,
+    "cvss": 49522,
+    "bfs_centrality": 47950
+   },
+   "controls": {
+    "cvar": 5,
+    "mean": 7,
+    "cvss": 4,
+    "bfs_centrality": 6
+   }
+  },
+  {
+   "budget_inr": 100000,
+   "cvar": {
+    "cvar": 8.1702,
+    "mean": 10.9895,
+    "cvss": 18.7103,
+    "bfs_centrality": 16.145
+   },
+   "cost_inr": {
+    "cvar": 99692,
+    "mean": 99958,
+    "cvss": 98890,
+    "bfs_centrality": 99704
+   },
+   "controls": {
+    "cvar": 14,
+    "mean": 17,
+    "cvss": 5,
+    "bfs_centrality": 5
+   }
+  },
+  {
+   "budget_inr": 150000,
+   "cvar": {
+    "cvar": 6.3397,
+    "mean": 7.7773,
+    "cvss": 17.1197,
+    "bfs_centrality": 15.1146
+   },
+   "cost_inr": {
+    "cvar": 149669,
+    "mean": 149962,
+    "cvss": 149008,
+    "bfs_centrality": 148216
+   },
+   "controls": {
+    "cvar": 24,
+    "mean": 21,
+    "cvss": 7,
+    "bfs_centrality": 7
+   }
+  },
+  {
+   "budget_inr": 250000,
+   "cvar": {
+    "cvar": 5.189,
+    "mean": 6.8231,
+    "cvss": 16.248,
+    "bfs_centrality": 13.8365
+   },
+   "cost_inr": {
+    "cvar": 249901,
+    "mean": 249286,
+    "cvss": 249068,
+    "bfs_centrality": 248813
+   },
+   "controls": {
+    "cvar": 27,
+    "mean": 22,
+    "cvss": 13,
+    "bfs_centrality": 8
+   }
+  },
+  {
+   "budget_inr": 400000,
+   "cvar": {
+    "cvar": 4.7239,
+    "mean": 6.165,
+    "cvss": 12.8384,
+    "bfs_centrality": 11.1907
+   },
+   "cost_inr": {
+    "cvar": 398311,
+    "mean": 399349,
+    "cvss": 393320,
+    "bfs_centrality": 399589
+   },
+   "controls": {
+    "cvar": 27,
+    "mean": 30,
+    "cvss": 41,
+    "bfs_centrality": 36
+   }
+  },
+  {
+   "budget_inr": 600000,
+   "cvar": {
+    "cvar": 4.5445,
+    "mean": 6.125,
+    "cvss": 12.607,
+    "bfs_centrality": 10.7288
+   },
+   "cost_inr": {
+    "cvar": 485682,
+    "mean": 483963,
+    "cvss": 400055,
+    "bfs_centrality": 441818
+   },
+   "controls": {
+    "cvar": 33,
+    "mean": 43,
+    "cvss": 42,
+    "bfs_centrality": 45
+   }
+  }
+ ]
+}

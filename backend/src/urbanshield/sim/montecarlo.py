@@ -256,12 +256,53 @@ def simulate(
     target category, shared-firmware pivot, forced campaign CVE) for the Red-Team.
     Same inputs and seed -> identical output.
     """
+    start = _start(city, n_scenarios, seed, controls, strategy, campaign_rate)
+    pivot = strategy is not None and strategy.pivot_shared_firmware
+    family = _firmware_family(city) if pivot else None
+    pivot_ok = start.draws.exploit < start.exploit_mult[None, :]
+    compromised = _spread(start.seeds, start.can_fall, start.reach, family, pivot_ok)
+
+    depends = _adjacency(city, start.index, EdgeKind.DEPENDS)
+    crit = np.array([d.criticality for d in city.devices])
+    per_device = crit + start.spread_mult * _cascade_reach(crit, depends)
+    device_loss = compromised * per_device[None, :]
+
+    return ScenarioLosses(
+        city_id=city.id,
+        seed=seed,
+        device_ids=tuple(start.index),
+        device_loss=device_loss.astype(np.float64),
+        compromised=compromised,
+        campaign_cve=start.campaign_cve,
+    )
+
+
+@dataclass(frozen=True)
+class _Start:
+    """Everything a run decides before the spread: draws, odds and the first devices lost."""
+
+    index: dict[str, int]
+    draws: _Draws
+    reach: sparse.csr_matrix
+    exploit_mult: np.ndarray
+    spread_mult: np.ndarray
+    can_fall: np.ndarray  # (S, N)
+    seeds: np.ndarray  # (S, N) devices lost before any spread
+    campaign_cve: tuple[str | None, ...]
+
+
+def _start(
+    city: City,
+    n_scenarios: int,
+    seed: int,
+    controls: dict[str, ControlKind] | None,
+    strategy: Strategy | None,
+    campaign_rate: float,
+) -> _Start:
     n = len(city.devices)
     index = {d.id: i for i, d in enumerate(city.devices)}
     draws = _draw(np.random.default_rng(seed), n_scenarios, n)
-
     reach = _adjacency(city, index, EdgeKind.REACH)
-    depends = _adjacency(city, index, EdgeKind.DEPENDS)
     exploit_mult, spread_mult = _multipliers(city, controls)
     can_fall = draws.exploit < (_base_odds(city) * exploit_mult)[None, :]
 
@@ -269,20 +310,35 @@ def simulate(
     campaign_seeds, campaign_cve = _campaigns(city, draws, exploit_mult, campaign_rate, strategy)
     fired = np.array([c is not None for c in campaign_cve], dtype=bool)
     seeds = np.where(fired[:, None], campaign_seeds, entries)
+    return _Start(index, draws, reach, exploit_mult, spread_mult, can_fall, seeds, campaign_cve)
 
-    pivot = strategy is not None and strategy.pivot_shared_firmware
-    family = _firmware_family(city) if pivot else None
-    compromised = _spread(seeds, can_fall, reach, family, draws.exploit < exploit_mult[None, :])
 
-    crit = np.array([d.criticality for d in city.devices])
-    per_device = crit + spread_mult * _cascade_reach(crit, depends)
-    device_loss = compromised * per_device[None, :]
+def fall_hops(
+    city: City,
+    scenario: int,
+    n_scenarios: int = 2000,
+    seed: int = 0,
+    controls: dict[str, ControlKind] | None = None,
+    campaign_rate: float = 0.2,
+) -> np.ndarray:
+    """When each device is lost in one scenario of ``simulate(city, n_scenarios, seed, controls)``:
+    0 = lost before any spread, k = lost on spread hop k, -1 = never.
 
-    return ScenarioLosses(
-        city_id=city.id,
-        seed=seed,
-        device_ids=tuple(index),
-        device_loss=device_loss.astype(np.float64),
-        compromised=compromised,
-        campaign_cve=campaign_cve,
-    )
+    Uses the same draws as ``simulate`` (common random numbers), so ``fall_hops(...) >= 0`` equals
+    that run's ``compromised[scenario]`` and two plans replay the identical scenario. For the
+    dashboard replay only; Red-Team strategies are not supported here.
+    """
+    if not 0 <= scenario < n_scenarios:
+        raise ValueError(f"scenario must be in [0, {n_scenarios}), got {scenario}")
+    start = _start(city, n_scenarios, seed, controls, None, campaign_rate)
+    can_fall = start.can_fall[scenario]
+    hops = np.where(start.seeds[scenario], 0, -1)
+    frontier = np.flatnonzero(hops == 0)
+    hop = 0
+    while len(frontier):
+        hop += 1
+        reached = np.unique(start.reach[frontier].indices)
+        new = reached[can_fall[reached] & (hops[reached] < 0)]
+        hops[new] = hop
+        frontier = new
+    return hops

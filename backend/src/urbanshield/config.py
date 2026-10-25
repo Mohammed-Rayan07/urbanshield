@@ -29,7 +29,7 @@ class Settings:
     city_seed: int
     n_scenarios: int
     cors_origins: tuple[str, ...]
-    budget_inr: int = 600_000  # the demo's ₹6 lakh
+    budget_inr: int = 150_000  # the demo budget: ₹1.5 lakh, a quarter of the original ₹6 lakh
     downtime_h: float = 24.0
     approval_timeout_s: float = 600.0
     allow_demo_tamper: bool = False  # POST /api/audit/tamper exists only when ALLOW_DEMO_TAMPER=1
@@ -56,7 +56,7 @@ def get_settings() -> Settings:
         city_seed=int(_env("CITY_SEED", "7")),
         n_scenarios=int(_env("N_SCENARIOS", "2000")),
         cors_origins=tuple(o.strip() for o in _env("CORS_ORIGINS", "http://localhost:5173").split(",")),
-        budget_inr=int(_env("BUDGET_INR", "600000")),
+        budget_inr=int(_env("BUDGET_INR", "150000")),
         downtime_h=float(_env("DOWNTIME_H", "24")),
         approval_timeout_s=float(_env("APPROVAL_TIMEOUT_S", "600")),
         allow_demo_tamper=_flag("ALLOW_DEMO_TAMPER"),
