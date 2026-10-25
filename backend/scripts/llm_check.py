@@ -29,7 +29,7 @@ def _timed(fn: Any, **kwargs: Any) -> tuple[Any, int]:
     return result, int((time.perf_counter() - started) * 1000)
 
 
-def main() -> int:
+def _main() -> int:
     settings = get_settings()
     if settings.llm_mode != "live" or not (settings.llm_base_url and settings.llm_api_key):
         print("Set LLM_MODE=live, LLM_BASE_URL and LLM_API_KEY in .env first.", file=sys.stderr)
@@ -121,6 +121,17 @@ def main() -> int:
         "\nAll checks passed." if not failures else f"\n{len(failures)} checks failed: {', '.join(failures)}"
     )
     return 0 if not failures else 1
+
+
+def main() -> int:
+    """Run the check and turn provider errors into a concise failure instead of a traceback."""
+    from openai import APIStatusError
+
+    try:
+        return _main()
+    except APIStatusError as exc:
+        print(f"[FAIL] provider request: HTTP {exc.status_code}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
