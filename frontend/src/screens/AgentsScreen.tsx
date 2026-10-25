@@ -65,6 +65,7 @@ import { STAGES, type Hole, type StageStatus } from '../lib/run'
 import { useRoute } from '../lib/route'
 import { useStore } from '../lib/store'
 import type { AgentEvent, AgentName, ControlKind, Device } from '../types'
+import AttackConsole from '../components/AttackConsole'
 
 const AGENT_TONE: Record<AgentName, { color: string; tone: Tone }> = {
   sentinel: { color: C.info, tone: 'info' },
@@ -456,6 +457,8 @@ export default function AgentsScreen() {
           <Stepper stages={v.stages} running={running} />
         </div>
       </Card>
+
+      <AttackConsole />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">

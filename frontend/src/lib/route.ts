@@ -1,9 +1,9 @@
 // Hash routing: #/overview, #/risk?plan=…, deep-linkable without a router dependency.
 import { useEffect, useState } from 'react'
 
-export type RouteId = 'overview' | 'risk' | 'response' | 'devices' | 'judge' | 'audit'
+export type RouteId = 'overview' | 'story' | 'risk' | 'response' | 'devices' | 'judge' | 'audit'
 
-export const ROUTES: RouteId[] = ['overview', 'risk', 'response', 'devices', 'judge', 'audit']
+export const ROUTES: RouteId[] = ['overview', 'story', 'risk', 'response', 'devices', 'judge', 'audit']
 
 export interface Route {
   id: RouteId

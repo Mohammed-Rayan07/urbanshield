@@ -7,6 +7,7 @@ export default defineConfig({
   server: {
     port: 5173,
     // The backend runs on :8000; proxying keeps the browser on one origin (no CORS in dev).
-    proxy: { '/api': 'http://localhost:8000' },
+    // 127.0.0.1, not localhost: Node may resolve localhost to ::1 while uvicorn binds IPv4 only.
+    proxy: { '/api': 'http://127.0.0.1:8000' },
   },
 })

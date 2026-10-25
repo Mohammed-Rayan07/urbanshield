@@ -52,6 +52,7 @@ import {
 import { href } from '../lib/route'
 import { useStore } from '../lib/store'
 import type { LossHistogram, Objective, Plan } from '../types'
+import BudgetFrontier from '../components/BudgetFrontier'
 
 const BASELINES: { id: Objective; label: string }[] = [
   { id: 'cvss', label: 'CVSS-first' },
@@ -257,6 +258,8 @@ export default function PlansScreen() {
       </div>
 
       {/* forecast-equivalent: the distribution */}
+      <BudgetFrontier />
+
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
         <Card i={7} className="pb-4">
           <CardHeader

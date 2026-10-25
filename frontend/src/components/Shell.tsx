@@ -2,6 +2,7 @@
 import {
   Activity,
   CalendarDays,
+  MonitorPlay,
   Cpu,
   FileLock2,
   FlaskConical,
@@ -70,6 +71,7 @@ function Sidebar(props: { route: RouteId }) {
   const pending = run.view.pending ? 1 : 0
   const primary: NavItem[] = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'story', label: 'Story Mode', icon: MonitorPlay },
     { id: 'risk', label: 'Risk Intelligence', icon: Activity },
     { id: 'response', label: 'Response & Mitigation', icon: ShieldCheck, badge: pending || undefined },
   ]
@@ -257,6 +259,7 @@ export default function Shell(props: { route: RouteId; children: ReactNode }) {
 function MobileNav(props: { route: RouteId }) {
   const items: [RouteId, string][] = [
     ['overview', 'Overview'],
+    ['story', 'Story'],
     ['risk', 'Risk'],
     ['response', 'Response'],
     ['devices', 'Devices'],

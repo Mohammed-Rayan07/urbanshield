@@ -9,6 +9,7 @@ import CityScreen from './screens/CityScreen'
 // The Overview ships in the main bundle; the other workspaces load on first visit.
 const SCREENS: Record<RouteId, { title: string; Screen: ComponentType }> = {
   overview: { title: 'Overview', Screen: CityScreen },
+  story: { title: 'Story Mode', Screen: lazy(() => import('./screens/StoryScreen')) },
   risk: { title: 'Risk Intelligence', Screen: lazy(() => import('./screens/PlansScreen')) },
   response: { title: 'Response & Mitigation', Screen: lazy(() => import('./screens/AgentsScreen')) },
   devices: { title: 'Devices', Screen: lazy(() => import('./screens/DevicesScreen')) },
