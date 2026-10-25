@@ -63,9 +63,13 @@ cd backend && uv sync && uv run uvicorn urbanshield.api.main:app --reload --port
 cd frontend && npm ci && npm run dev        # http://localhost:5173
 ```
 
-Or everything in Docker, offline replay mode: `docker compose up --build` → <http://localhost:8080>.
+Or everything in Docker: `LLM_MODE=mock docker compose up --build` → <http://localhost:8080>.
 
-No API key is needed: `LLM_MODE=mock` (default) runs deterministic, rule-based agents (labelled as such in the UI), `replay` serves recorded agent traces. See [`.env.example`](.env.example) for live mode with any OpenAI-compatible endpoint.
+No API key is needed: `LLM_MODE=mock` (the default for local runs) uses deterministic, rule-based agents, labelled as
+such in the UI. `live` calls any OpenAI-compatible endpoint (see [`.env.example`](.env.example)) and records every
+response to `backend/fixtures/traces`. `replay` serves those recordings offline, so run each advisory once in live mode
+(e.g. `LLM_MODE=live uv run python scripts/build_demo.py`) before relying on it; an unrecorded prompt is reported as a
+replay miss, never guessed. The compose file defaults to `replay`.
 
 ## The dashboard
 
