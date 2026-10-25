@@ -6,9 +6,14 @@ import type {
   AuditEntry,
   City,
   CityRisk,
+  EnforcerStatus,
+  Frontier,
   Plan,
   QuarantinePreview,
+  SignalCommand,
   ToolResult,
+  TwoCities,
+  Verdict,
   VerifyResult,
 } from './types'
 
@@ -59,6 +64,15 @@ export const api = {
   plans: (cityId = CITY_ID) => request<Plan[]>(`/cities/${cityId}/plans`),
   /** Held-out simulation: per-device loss and the loss distribution per strategy. */
   risk: (cityId = CITY_ID) => request<CityRisk>(`/cities/${cityId}/risk`),
+  /** One held-out worst-5% scenario replayed hop by hop: no controls, CVSS-first, UrbanShield. */
+  replay: (cityId = CITY_ID) => request<TwoCities>(`/cities/${cityId}/replay`),
+  /** Precomputed held-out worst-case loss per planner across budgets (the budget slider). */
+  frontier: (cityId = CITY_ID) => request<Frontier>(`/cities/${cityId}/frontier`),
+  /** Policy in force at the Enforcer, corridor paths and recent decisions. */
+  enforcer: (cityId = CITY_ID) => request<EnforcerStatus>(`/cities/${cityId}/enforcer`),
+  /** Judge one signal command at the Enforcer (audited). */
+  command: (command: SignalCommand, cityId = CITY_ID) =>
+    request<Verdict>(`/cities/${cityId}/enforcer/commands`, { method: 'POST', body: JSON.stringify(command) }),
   startIncident: (advisoryText: string, constraintsText?: string, cityId = CITY_ID) =>
     request<{ run_id: string }>(`/cities/${cityId}/incidents`, {
       method: 'POST',
@@ -120,7 +134,9 @@ export function useLoad<T>(load: () => Promise<T>): Loaded<T> {
   return { data, error, reload }
 }
 
-/** Subscribe to a run's Server-Sent Events. Events accumulate in arrival order. */
+/** Subscribe to a run's Server-Sent Events. Events accumulate in arrival order.
+ *  The browser reconnects after a dropped connection and the server replays the run from its first
+ *  event, so events already shown (same id) are skipped rather than duplicated. */
 export function useRunEvents(runId: string | null): { events: AgentEvent[]; done: boolean } {
   // State is tagged with its run so a new run starts empty without a reset inside the effect.
   const [state, setState] = useState({ runId: null as string | null, events: [] as AgentEvent[], done: false })
@@ -129,17 +145,16 @@ export function useRunEvents(runId: string | null): { events: AgentEvent[]; done
     const source = new EventSource(`/api/runs/${runId}/events`)
     source.onmessage = (msg) => {
       const event = JSON.parse(msg.data) as AgentEvent
-      setState((prev) =>
-        prev.runId === runId
-          ? { ...prev, events: [...prev.events, event] }
-          : { runId, events: [event], done: false },
-      )
+      setState((prev) => {
+        if (prev.runId !== runId) return { runId, events: [event], done: false }
+        if (prev.events.some((e) => e.id === event.id)) return prev
+        return { ...prev, events: [...prev.events, event] }
+      })
     }
     source.addEventListener('done', () => {
-      setState((prev) => ({ ...prev, runId, done: true }))
+      setState((prev) => (prev.runId === runId ? { ...prev, done: true } : { runId, events: [], done: true }))
       source.close()
     })
-    source.onerror = () => source.close()
     return () => source.close()
   }, [runId])
   return state.runId === runId ? state : { events: [], done: false }

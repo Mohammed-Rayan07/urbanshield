@@ -12,6 +12,7 @@ Approvals need the ``X-Role: approver`` header: demo RBAC, not real authenticati
 from __future__ import annotations
 
 import asyncio
+import itertools
 import json
 import logging
 import sqlite3
@@ -32,11 +33,13 @@ from urbanshield.agents.engine import Engine, default_engine, engine_ready
 from urbanshield.agents.llm import LLM, ReplayMiss, get_llm
 from urbanshield.agents.orchestrator import run_incident
 from urbanshield.agents.tools import RunContext, plan_brief
-from urbanshield.api import fixtures, risk
+from urbanshield.api import fixtures, frontier, replay, risk
 from urbanshield.api.runs import RunRegistry, RunState
 from urbanshield.config import Settings, get_settings
 from urbanshield.guard import quarantine
 from urbanshield.guard.audit_log import AuditLog
+from urbanshield.guard.enforcer import Enforcer, EnforcerStatus, PolicySigner, compile_policy
+from urbanshield.guard.interlock import SignalCommand, Verdict
 from urbanshield.schemas import (
     Advisory,
     AgentEvent,
@@ -45,6 +48,7 @@ from urbanshield.schemas import (
     Budget,
     City,
     CityRisk,
+    ControlKind,
     EventKind,
     Plan,
     ToolResult,
@@ -56,6 +60,7 @@ log = logging.getLogger("urbanshield.api")
 APPROVER = "approver"
 PLANS_TOOL_ID = "tc-plans"
 RISK_TOOL_ID = "tc-risk"
+REPLAY_TOOL_ID = "tc-replay"
 PREVIEW_CONCURRENCY = 2  # each preview is one LLM call; bound the spend and the threadpool
 MAX_AUDIT_PAGE = 5000
 
@@ -217,6 +222,35 @@ def create_app(
                 plans_cache["record"] = record
             return plans_cache["plans"], plans_cache["record"]
 
+    # The control-plane key signs policy in a run's apply step; the Enforcer holds only its verify key.
+    signer = PolicySigner()
+    enforcers: dict[str, Enforcer] = {}
+    enforcer_lock = threading.Lock()
+    enforcer_events = itertools.count(1)
+
+    def the_enforcer() -> Enforcer:
+        with cache_lock:
+            if "enforcer" not in enforcers:
+                enforcers["enforcer"] = Enforcer(city=the_city(), verify_key=signer.verify_key)
+            return enforcers["enforcer"]
+
+    def enforce_plan(plan_id: str, applied: dict[str, ControlKind]) -> dict[str, Any]:
+        """A run's apply step only (auto-applied + approved controls): compile, sign and install them,
+        then verify the corridor."""
+        enforcer = the_enforcer()
+        with enforcer_lock:
+            before = enforcer.corridor_paths()
+            policy = compile_policy(enforcer.city, plan_id, applied, version=enforcer.version + 1)
+            signed = signer.sign(policy)
+            report = enforcer.apply(signed)
+            after = enforcer.corridor_paths()
+        return report | {
+            "policy_sha256": policy.sha256,
+            "key_id": signed.key_id,
+            "corridor_before": before.model_dump(),
+            "corridor_after": after.model_dump(),
+        }
+
     def require_audit() -> AuditLog:
         if audit is None:
             raise HTTPException(status_code=503, detail=f"audit log {audit_status}")
@@ -323,6 +357,110 @@ def create_app(
             raise HTTPException(status_code=503, detail="risk needs the simulator (placeholder data)")
         return live_risk()
 
+    def live_replay() -> replay.TwoCities:
+        """One worst-case scenario under no controls, CVSS-first and CVaR, computed once."""
+        with cache_lock:
+            if "replay" not in plans_cache:
+                city = the_city()
+                result = replay.two_cities(engine, city, live_plans()[0], settings.n_scenarios, budget.alpha)
+                views = {
+                    v.label: {
+                        "devices_lost": v.devices_lost,
+                        "corridor_lost": v.corridor_lost,
+                        "loss": v.loss,
+                    }
+                    for v in result.views
+                }
+                plans_cache["replay_record"] = ToolResult(
+                    id=REPLAY_TOOL_ID,
+                    tool="simulate",
+                    agent=AgentName.ANALYST,
+                    args={
+                        "scenario": result.scenario,
+                        "seed": result.seed,
+                        "n_scenarios": result.n_scenarios,
+                    },
+                    result={"selection": result.selection, "tail_rank": result.tail_rank, "views": views},
+                )
+                plans_cache["replay"] = result.model_copy(update={"tool_call_id": REPLAY_TOOL_ID})
+            return plans_cache["replay"]
+
+    @app.get(
+        "/api/cities/{city_id}/replay",
+        response_model=replay.TwoCities,
+        responses={503: {"description": "The simulator is not ready (placeholder data)"}},
+    )
+    def get_replay(city_id: str) -> replay.TwoCities:
+        """'Same attack, two cities': one held-out worst-5% scenario, replayed hop by hop with no
+        controls, under CVSS-first and under the CVaR plan (identical random draws)."""
+        city_or_404(city_id)
+        if not is_live:
+            raise HTTPException(status_code=503, detail="replay needs the simulator (placeholder data)")
+        return live_replay()
+
+    @app.get(
+        "/api/cities/{city_id}/frontier",
+        response_model=frontier.Frontier,
+        responses={503: {"description": "The frontier has not been built (scripts/build_frontier.py)"}},
+    )
+    def get_frontier(city_id: str) -> frontier.Frontier:
+        """Held-out worst-case loss of each planner across budgets (precomputed)."""
+        city_or_404(city_id)
+        result = frontier.load_frontier() if is_live else None
+        if result is None or result.city_id != city_id:
+            raise HTTPException(status_code=503, detail="frontier not built for this city")
+        return result
+
+    @app.get(
+        "/api/cities/{city_id}/enforcer",
+        response_model=EnforcerStatus,
+        responses={503: {"description": "The engine is not ready (placeholder data)"}},
+    )
+    def get_enforcer(city_id: str) -> EnforcerStatus:
+        """Policy in force (version, hash, rule counts), allowed flows, corridor paths and recent
+        decisions. There is deliberately no route that pushes policy: only an incident run's apply step
+        does."""
+        city_or_404(city_id)
+        if not is_live:
+            raise HTTPException(status_code=503, detail="the enforcer needs the live twin (placeholder data)")
+        enforcer = the_enforcer()
+        with enforcer_lock:  # apply and admit mutate its state from other request threads
+            return enforcer.status()
+
+    @app.post(
+        "/api/cities/{city_id}/enforcer/commands",
+        response_model=Verdict,
+        responses={503: {"description": "Engine not ready, or audit log unavailable (fail closed)"}},
+    )
+    def post_command(city_id: str, command: SignalCommand) -> Verdict:
+        """Judge one signal command at the Enforcer (closed management, corridor interlock). Every
+        verdict is appended to the signed audit log before it is returned."""
+        city = city_or_404(city_id)
+        if not is_live:
+            raise HTTPException(status_code=503, detail="the enforcer needs the live twin (placeholder data)")
+        if command.device_id not in {d.id for d in city.devices}:
+            raise HTTPException(status_code=422, detail=f"unknown device {command.device_id[:40]!r}")
+        log_ = require_audit()
+        enforcer = the_enforcer()
+        with enforcer_lock:
+            verdict = enforcer.admit(command)
+            event_id = f"enforcer:ev-{next(enforcer_events):04d}"
+        word = "Allowed" if verdict.allowed else "Vetoed"
+        event = AgentEvent(
+            id=event_id,
+            city_id=city.id,
+            run_id="enforcer",
+            agent=AgentName.SYSTEM,
+            kind=EventKind.APPLY if verdict.allowed else EventKind.REJECT,
+            summary=f"Enforcer: {word} {command.describe()}"[:280],
+            payload={"command": command.model_dump(), "verdict": verdict.model_dump()},
+        )
+        try:
+            log_.append(event)
+        except (sqlite3.Error, OSError) as exc:
+            raise HTTPException(status_code=503, detail="audit log unavailable") from exc
+        return verdict
+
     @app.post(
         "/api/cities/{city_id}/incidents",
         response_model=IncidentStarted,
@@ -347,6 +485,7 @@ def create_app(
             emit=emitter(state),
             budget=budget,
             n_scenarios=settings.n_scenarios,
+            enforce=enforce_plan,
         )
         if not runs.add(state):
             raise HTTPException(
@@ -457,6 +596,9 @@ def create_app(
             if tool_call_id == RISK_TOOL_ID:
                 live_risk()
                 return plans_cache["risk_record"]
+            if tool_call_id == REPLAY_TOOL_ID:
+                live_replay()
+                return plans_cache["replay_record"]
             _, record = live_plans()
             if tool_call_id != record.id:
                 raise HTTPException(status_code=404, detail=f"unknown tool call {tool_call_id!r}")

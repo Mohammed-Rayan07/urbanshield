@@ -16,6 +16,7 @@ import {
   X,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import TwoCities from '../components/TwoCities'
 import CityMap, { BasemapToggle, RiskLegend, ShapeLegend, type Basemap, type MapMode } from '../components/CityMap'
 import { Donut, LossDistribution, RankBars } from '../components/charts'
 import { seriesColor, seriesLabel } from '../lib/chart'
@@ -228,6 +229,8 @@ export default function CityScreen() {
           <AlertBanner alert={alerts[0]} presetId={presetFor(alerts[0].cve)} onShow={() => showCve(alerts[0].cve)} />
         )}
       </div>
+
+      <TwoCities />
 
       {/* KPI row */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">

@@ -1,5 +1,5 @@
 // Views derived from the city and the simulated risk. Pure functions: no fetching, no React.
-import type { Category, City, CityRisk, Device, DeviceRisk, Plan } from '../types'
+import type { Category, City, CityRisk, Device, DeviceRisk, Frontier, Plan } from '../types'
 import { C } from './colors'
 
 export type LatLng = [number, number]
@@ -203,4 +203,11 @@ export function overlap(a: Plan, b: Plan): number {
   const inter = [...x].filter((d) => y.has(d)).length
   const union = new Set([...x, ...y]).size
   return union === 0 ? 1 : inter / union
+}
+
+/** The cheapest budget at which UrbanShield's worst case beats CVSS-first at the largest budget. */
+export function cheapestWin(f: Frontier) {
+  const top = f.points[f.points.length - 1]
+  const hit = f.points.find((p) => p.cvar.cvar < top.cvar.cvss)
+  return hit ? { ours: hit, theirs: top } : null
 }

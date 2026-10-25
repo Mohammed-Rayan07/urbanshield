@@ -200,3 +200,95 @@ export interface AuditEntry {
   hash: string
   signature: string
 }
+
+// ---------------------------------------------------------------- replay, frontier, enforcement
+// Mirrors backend api/replay.py, api/frontier.py, guard/enforcer.py and guard/interlock.py.
+
+export interface ReplayView {
+  label: 'none' | 'cvss' | 'cvar'
+  plan_id: string | null
+  cost_inr: number
+  /** device id -> spread hop at which it was lost (0 = first); devices not listed are never lost */
+  hops: Record<string, number>
+  devices_lost: number
+  corridor_lost: number
+  loss: number
+  /** Mean devices lost over the whole worst-5% set (not just this scenario) */
+  tail_devices_lost: number
+  tail_corridor_share: number
+}
+
+export interface TwoCities {
+  city_id: string
+  scenario: number
+  seed: number
+  n_scenarios: number
+  alpha: number
+  tail_rank: number
+  selection: string
+  corridor_ids: string[]
+  max_hop: number
+  views: ReplayView[]
+  tool_call_id: string | null
+}
+
+export interface FrontierPoint {
+  budget_inr: number
+  cvar: Record<string, number>
+  cost_inr: Record<string, number>
+  controls: Record<string, number>
+}
+
+export interface Frontier {
+  city_id: string
+  downtime_h: number
+  n_scenarios: number
+  test_seed: number
+  generated_by: string
+  points: FrontierPoint[]
+}
+
+export type SignalPhase = 'green_wave' | 'ns_green' | 'ew_green' | 'all_red' | 'flash' | 'both_green'
+
+export interface SignalCommand {
+  device_id: string
+  phase: SignalPhase
+  hold_s?: number
+  remote?: boolean
+}
+
+export interface Verdict {
+  allowed: boolean
+  rule: string | null
+  reason: string
+  latency_us: number
+}
+
+export interface CorridorPaths {
+  entry_points: number
+  corridor: number
+  reachable: string[]
+  unfiltered: string[]
+  status: 'open' | 'filtered' | 'closed'
+}
+
+export interface EnforcerDecision {
+  ts: string
+  kind: 'policy' | 'command'
+  allowed: boolean
+  summary: string
+  rule: string | null
+}
+
+export interface EnforcerStatus {
+  city_id: string
+  version: number
+  plan_id: string | null
+  policy_sha256: string | null
+  key_id: string
+  rules: Record<string, number>
+  flows_allowed: number
+  flows_total: number
+  corridor: CorridorPaths
+  decisions: EnforcerDecision[]
+}

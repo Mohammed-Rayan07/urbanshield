@@ -105,6 +105,30 @@ def test_live_risk_decomposes_the_cvar_and_matches_the_plans(client) -> None:
     assert client.get("/api/cities/nope/risk").status_code == 404
 
 
+def test_live_replay_is_one_tail_scenario_under_each_plan(client) -> None:
+    rep = client.get("/api/cities/tiny/replay").json()
+    views = {v["label"]: v for v in rep["views"]}
+    assert set(views) == {"none", "cvss", "cvar"}
+    plans = {p["objective"]: p for p in client.get("/api/cities/tiny/plans").json()}
+    assert views["cvar"]["plan_id"] == plans["cvar"]["id"] and views["none"]["plan_id"] is None
+    assert 1 <= rep["tail_rank"] <= rep["n_scenarios"] * (1 - rep["alpha"]) + 1
+    for v in views.values():
+        assert v["devices_lost"] == len(v["hops"])
+        assert v["corridor_lost"] == sum(d in v["hops"] for d in rep["corridor_ids"])
+        assert all(0 <= h <= rep["max_hop"] for h in v["hops"].values())
+    # Common random numbers: a plan can only remove losses from the uncontrolled scenario.
+    assert set(views["cvar"]["hops"]) <= set(views["none"]["hops"])
+    assert set(views["cvss"]["hops"]) <= set(views["none"]["hops"])
+    record = client.get(f"/api/tool-results/{rep['tool_call_id']}").json()
+    assert record["args"]["scenario"] == rep["scenario"]
+    assert record["result"]["views"]["cvar"]["devices_lost"] == views["cvar"]["devices_lost"]
+    assert client.get("/api/cities/nope/replay").status_code == 404
+
+
+def test_frontier_is_refused_until_built_for_this_city(client) -> None:
+    assert client.get("/api/cities/tiny/frontier").status_code == 503
+
+
 def test_full_run_with_approval_over_http(client) -> None:
     run_id = _start(client)
     pending = _wait_pending(client, run_id)
@@ -137,6 +161,34 @@ def test_full_run_with_approval_over_http(client) -> None:
     result = client.get("/api/audit/verify").json()
     assert result["ok"] and result["entries"] == len(events) and result["head_seq"] == len(events) - 1
     assert len(client.get("/api/audit/key").json()["verify_key_hex"]) == 64
+
+    enforced = next(e for e in events if e.summary.startswith("Enforced signed policy"))
+    report = enforced.payload["enforcement"]
+    status = client.get("/api/cities/tiny/enforcer").json()
+    assert status["version"] == report["version"] == 1
+    assert status["policy_sha256"] == report["policy_sha256"] and status["plan_id"] == pending["plan_id"]
+    assert sum(status["rules"].values()) == report["rules"]
+    assert report["corridor_after"]["status"] in ("open", "filtered", "closed")
+
+
+def test_enforcer_commands_are_judged_and_audited(client) -> None:
+    status = client.get("/api/cities/tiny/enforcer").json()
+    assert status["version"] == 0 and status["plan_id"] is None
+    assert status["flows_allowed"] == status["flows_total"] > 0
+    city = client.get("/api/cities/tiny").json()
+    signal = next(d["id"] for d in city["devices"] if d["category"] == "signal")
+    url = "/api/cities/tiny/enforcer/commands"
+    unsafe = client.post(url, json={"device_id": signal, "phase": "both_green"}).json()
+    assert unsafe["allowed"] is False and unsafe["rule"] == "conflicting_greens"
+    safe = client.post(url, json={"device_id": signal, "phase": "ns_green"}).json()
+    assert safe["allowed"] is True
+    assert client.post(url, json={"device_id": "d-nope", "phase": "ns_green"}).status_code == 422
+    assert client.post(url, json={"device_id": signal, "phase": "rainbow"}).status_code == 422
+    audited = [e for e in client.get("/api/audit/entries").json() if e["event_id"].startswith("enforcer:")]
+    assert len(audited) == 2
+    assert client.get("/api/audit/verify").json()["ok"]
+    decisions = client.get("/api/cities/tiny/enforcer").json()["decisions"]
+    assert [d["allowed"] for d in decisions[:2]] == [True, False]
 
 
 def test_approval_timeout_applies_nothing_that_needs_approval(tiny_city, tmp_path) -> None:

@@ -104,10 +104,16 @@ def assess(ctx: RunContext, matches: list[Match]) -> Assessment:
         for d in affected
         if d not in covered
     ]
+    # Blast radius only follows dependencies; where an attacker can move next is REACH. A family of
+    # streetlights with no dependents can still be the way into the ambulance corridor.
+    mine = set(affected)
+    if affected and not any(
+        r.tool == "bfs_reach" and set(r.args.get("sources", [])) <= mine for r in results
+    ):
+        results.append(tools.call(ctx, AgentName.ANALYST, "bfs_reach", {"sources": affected}))
 
     simulation: ToolResult = [r for r in results if r.tool == "simulate"][-1]
     # Only results about the matched devices count: citing an unrelated hub cannot inflate them.
-    mine = set(affected)
     lost = sorted(
         {
             d

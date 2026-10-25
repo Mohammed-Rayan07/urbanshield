@@ -235,6 +235,8 @@ def _apply(ctx: RunContext, approvals: Approvals, timeout_s: float, residual: li
                 f"Applied {len(manual)} approved controls in the twin",
                 {"controls": request["controls"], "plan_id": plan.id},
             )
+    if ctx.enforce is not None and ctx.applied:
+        _enforce(ctx, plan.id)
     after = tools.call(ctx, AgentName.SYSTEM, "evaluate_applied", {})
     b, a = before.result, after.result
     ctx.event(
@@ -243,6 +245,25 @@ def _apply(ctx: RunContext, approvals: Approvals, timeout_s: float, residual: li
         f"Re-simulated: CVaR95 {b['cvar']:.2f} → {a['cvar']:.2f}, {a['controls_applied']} controls in place",
         {"before": b, "after": a, "before_tool_call_id": before.id, "plan_id": plan.id},
         tool_call_id=after.id,
+    )
+
+
+def _enforce(ctx: RunContext, plan_id: str) -> None:
+    """Compile what was applied into signed policy and install it at the Enforcer; report the corridor
+    paths before and after. A refused policy is an ERROR event: the twin is planned, nothing enforced."""
+    assert ctx.enforce is not None
+    try:
+        report = ctx.enforce(plan_id, dict(ctx.applied))
+    except ValueError as exc:  # PolicyRejected
+        ctx.event(AgentName.SYSTEM, EventKind.ERROR, f"Enforcer refused the policy: {exc}"[:280], {})
+        return
+    before, after = report["corridor_before"]["status"], report["corridor_after"]["status"]
+    ctx.event(
+        AgentName.SYSTEM,
+        EventKind.APPLY,
+        f"Enforced signed policy v{report['version']} ({tools.count(report['rules'], 'rule')}, "
+        f"{report['apply_ms']:g} ms): corridor paths {before} → {after}",
+        {"enforcement": report, "plan_id": plan_id},
     )
 
 
