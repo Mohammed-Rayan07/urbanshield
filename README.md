@@ -1,48 +1,58 @@
 # UrbanShield
 
-**Tail-risk-aware cyber resilience planning for the connected infrastructure of future cities.**
+**A cyber-resilience control plane for the connected infrastructure of future cities: it spends a fixed budget
+where the worst case is, enforces the fix as signed policy, and proves it by attacking itself again.**
 
 [![CI](https://github.com/Mohammed-Rayan07/urbanshield/actions/workflows/ci.yml/badge.svg)](https://github.com/Mohammed-Rayan07/urbanshield/actions/workflows/ci.yml)
 · ChronoForge 2026, NITK Surathkal · Cybersecurity track · Team **Merge Conflict**
 
-> 🎥 **Demo video:** _link added at submission_ · 📐 [Architecture](docs/ARCHITECTURE.md) · 📊 [Evaluation](docs/EVALS.md) · 📄 [Assumptions](docs/ASSUMPTIONS.md)
+> 🎥 **Demo video:** _link added at submission_ · 📐 [Architecture](docs/ARCHITECTURE.md) · 📊 [Evaluation](docs/EVALS.md) · 📄 [Assumptions](docs/ASSUMPTIONS.md) · 🎬 [Demo script](docs/DEMO_SCRIPT.md)
 
 ---
 
 ## The problem
 
-Cities are wiring up traffic signals, streetlights, smart meters and EV chargers faster than they can secure them. A scanner hands a small municipal team hundreds of findings sorted by CVSS. It does not say **which ten to fix with the money available**, and it knows nothing about what a device does or what depends on it. A medium-severity bug in firmware shared by a dozen streetlights, one hop from the ambulance-corridor signals, matters more than a critical bug in a decorative light. Cities don't fear the average year; they fear **the bad year**.
+Cities are wiring up traffic signals, streetlights, smart meters and EV chargers faster than they can secure them. A scanner hands a small municipal team hundreds of findings sorted by CVSS. It does not say **which ten to fix with the money available**, it knows nothing about what a device does or what depends on it, and it changes nothing on the network. A medium-severity bug in firmware shared by a dozen streetlights, one hop from the ambulance-corridor signals, matters more than a critical bug in a decorative light. Cities don't fear the average year; they fear **the bad year**.
 
-## What UrbanShield does
+## What UrbanShield does: detect → decide → enforce → verify
 
-Given a device inventory and a fixed budget in rupees, UrbanShield simulates how attacks spread through the city, then picks the set of fixes that **minimises worst-case (CVaR 95%) loss**, not average loss. When a new advisory arrives, four agents re-assess, re-plan, **attack their own plan**, and explain what changed. A human approves anything with downtime.
+1. **Detect.** A new advisory passes a prompt-injection quarantine, becomes a typed record, is cross-checked against the pinned KEV feed and the inventory, and is matched to the devices that actually carry it.
+2. **Decide.** Agents assess the blast radius and attack paths, then a CVaR MILP picks the controls that **minimise worst-case (CVaR 95%) loss** within the rupee budget and the operator's constraints. A Red-Team agent attacks the chosen plan; holes force a re-plan.
+3. **Enforce.** Low-risk, no-downtime controls apply automatically; anything with downtime waits for a human approver. What is applied is compiled into concrete rules (deny flows, close management ports, rotate credentials, schedule firmware, filter CVEs), **signed** with a control-plane Ed25519 key and installed at a **deny-by-default Enforcer**. Every signal command then passes a **corridor safety interlock** that refuses unsafe commands even with valid credentials.
+4. **Verify.** The Enforcer checks its own flow table (*can an internet-exposed device still reach a corridor signal?*), the plan is re-simulated, and every step lands in a hash-chained, signed audit log.
 
 | | |
 |---|---|
 | **Agents decide, tools compute** | Every number comes from a deterministic tool (BFS, Monte Carlo simulator, CVaR MILP). Agents choose *what* to compute. |
-| **Red-Team agent** | After a plan is chosen, an attacker agent searches for strategies that break *that* plan. Holes force a re-plan. |
+| **Red-Team agent** | After a plan is chosen, an attacker agent searches for strategies that break *that* plan. |
 | **The checker is not an LLM** | An Auditor in plain code rejects any claim that doesn't match a recorded tool result. |
-| **Prompt-injection quarantine** | Advisory text is reduced to a typed record before any planning agent sees it, then cross-checked against the pinned KEV feed (CVSS) and the city inventory (which firmware actually carries the CVE). |
-| **Tamper-evident** | Every agent action goes to a SHA-256 hash chain with Ed25519 signatures. |
+| **Signed, deny-by-default enforcement** | The gateway holds only the verify key, refuses a bad signature, another city's policy or an older version (no rollback), and there is no API route that pushes policy. |
+| **Corridor interlock** | Plain-code rules (no conflicting greens, no long remote holds on corridor signals, the corridor never fully dark) judge the *command*, not the login. Defence in depth: cabinets already have per-junction conflict monitors; this one sees the whole corridor from the network side. |
+| **Prompt-injection quarantine** | Advisory text is reduced to a typed record before any planning agent sees it, then cross-checked against the pinned feed and the city inventory. |
+| **Tamper-evident** | Every agent action, approval, enforced policy and enforcer verdict goes to a SHA-256 hash chain with Ed25519 signatures. |
 | **Honest numbers** | Plans are scored on held-out scenarios with bootstrap CIs, against CVSS-first, BFS-only and mean-loss baselines under the same budget. |
 
 ## Results
 
-On the demo city (50 devices, ₹6 lakh, 24 h downtime window), every plan is optimised on training scenarios and
+On the demo city (50 devices, **₹1.5 lakh**, 24 h downtime window), every plan is optimised on training scenarios and
 scored by the full simulator on 2,000 held-out ones ([`docs/EVALS.md`](docs/EVALS.md), regenerated by script):
 
 | Same budget and constraints | Worst-case loss (CVaR95) |
 |---|---|
-| vs CVSS-first patching | **64% lower** |
+| vs CVSS-first patching | **63% lower** (6.34 vs 17.12) |
 | vs BFS-only (reach centrality) | **58% lower** |
-| vs the same MILP minimising average loss | **26% lower** |
+| vs CVSS + KEV + EPSS ranking | **60% lower** |
+| vs the same MILP minimising average loss | **18.5% lower** |
 
-The advantage holds in 5 of 5 cities with costs and criticalities perturbed by ±20%. The MILP solves 5,000 devices
-within its 30 s limit.
+- **A quarter of the money, half the worst case:** UrbanShield at ₹1.5 L (6.34) beats CVSS-first given the full ₹6 L (12.61). The budget slider in the dashboard shows the whole frontier from ₹50 k to ₹6 L.
+- **Same attack, two cities:** in one of the worst 5% of held-out attacks, replayed with identical random draws, CVSS-first loses 23 devices and an ambulance-corridor signal; UrbanShield loses 1 and the corridor stays clear. Across *all* worst-5% attacks: 20.9 vs 5.4 devices lost on average, a corridor signal hit in 6% vs 1% of them.
+- **Robust:** the advantage over CVSS-first and BFS-only holds in **5 of 5** cities with costs and criticalities perturbed ±20%.
+- **Scales:** the MILP plans 5,000 devices within its 30 s limit, with an automatic hand-off to a greedy solver.
+- **Fast enforcement:** the interlock judges a command in microseconds; policy installs in milliseconds.
 
 ## Why agents, and not just BFS?
 
-Reachability *is* BFS, and the agents call it as a tool; there's even a BFS-only baseline in the results. What a graph search can't do is decide which devices a messy vendor bulletin affects, turn "festival in Zone 3, no streetlight downtime" into an optimiser constraint, or adapt an attack to the plan that was just chosen. That is what the agents do, under allowlists, with every decision logged.
+Reachability *is* BFS, and the agents call it as a tool; there's even a BFS-only baseline in the results. What a graph search can't do is decide which devices a messy vendor bulletin affects, turn "festival in Zone 3, no streetlight downtime" into an optimiser constraint, or adapt an attack to the plan that was just chosen. That is what the agents do, under allowlists, with every decision logged. **LLMs propose; deterministic code decides.**
 
 ## Quick start
 
@@ -55,23 +65,37 @@ cd frontend && npm ci && npm run dev        # http://localhost:5173
 
 Or everything in Docker, offline replay mode: `docker compose up --build` → <http://localhost:8080>.
 
-No API key is needed: `LLM_MODE=mock` (default) runs deterministic agents, `replay` serves recorded agent traces. See [`.env.example`](.env.example) for live mode with any OpenAI-compatible endpoint.
+No API key is needed: `LLM_MODE=mock` (default) runs deterministic, rule-based agents (labelled as such in the UI), `replay` serves recorded agent traces. See [`.env.example`](.env.example) for live mode with any OpenAI-compatible endpoint.
 
 ## The dashboard
 
-Six workspaces, one shared state (selected device, CVE alert and running incident follow you between them).
+Seven workspaces, one shared state (selected device, CVE alert and running incident follow you between them).
 Every dotted number opens a provenance drawer with the tool call, arguments and result that produced it.
 
 | Workspace | What it shows |
 |---|---|
-| **Overview** | The twin on a real basemap, coloured by each device's share of the simulated worst case (`/risk`); flip to "With UrbanShield" on the same scale. Active alerts rank inventory CVEs by the tail loss their carriers hold. |
-| **Risk Intelligence** | The held-out loss distribution of no controls, CVSS-first, BFS-only and UrbanShield with the worst 5% shaded; all eight plans side by side; where the budget goes; plan overlap; findings computed from the data. |
-| **Response & Mitigation** | Run an advisory (normal, poisoned or valid-but-wrong) through the agent loop live over SSE: pipeline stepper, ranked controls, attack paths on the map, hold-to-approve, re-simulated outcome, Auditor verdicts. `#/response?run=<id>` re-attaches to a run. |
+| **Story Mode** (`#/story`) | The 3-minute pitch as a full-screen, arrow-key walkthrough built from the live components: problem → two cities → live attack → evidence → trust. |
+| **Overview** | **Same attack, two cities**: one worst-case attack replayed hop by hop on two maps (CVSS-first vs UrbanShield). Below it, the twin on a real basemap coloured by each device's share of the simulated worst case, and alerts ranked by tail loss. |
+| **Risk Intelligence** | The **budget frontier** slider (worst-case loss per planner from ₹50 k to ₹6 L), the held-out loss distributions with the worst 5% shaded, all eight plans side by side, where the budget goes, plan overlap. |
+| **Response & Mitigation** | The **live attack console** (a 3-step kill chain fired at the real Enforcer, each verdict shown with its rule and latency), then an advisory run through the agent loop over SSE: pipeline stepper, attack paths, hold-to-approve, **signed policy enforced (corridor open → closed)**, re-simulated outcome, Auditor verdicts. |
 | **Devices** | The inventory with CVEs, EPSS/KEV, controls and each device's tail share. |
 | **Judge Mode** | Paste anything: the flagged spans stay in quarantine, only six typed, cross-checked fields reach the planner. Tamper with the audit log and watch Verify find the edit. |
 | **Audit Log** | The Ed25519-signed hash chain, its public key and a live verification. |
 
-`cd frontend && npm test` runs the unit tests for the event folding and risk derivations.
+## API
+
+| Route | What |
+|---|---|
+| `GET /api/cities/{id}` · `/plans` · `/risk` | The twin, the compared plans under the budget, per-device and per-plan held-out risk |
+| `GET /api/cities/{id}/replay` | Same attack, two cities: one worst-5% scenario, hop by hop, under no controls / CVSS-first / CVaR |
+| `GET /api/cities/{id}/frontier` | Held-out CVaR per planner across budgets (precomputed by `scripts/build_frontier.py`) |
+| `GET /api/cities/{id}/enforcer` | Policy in force (version, hash, rule counts), allowed flows, corridor paths, recent decisions |
+| `POST /api/cities/{id}/enforcer/commands` | Judge one signal command (closed management, corridor interlock); audited before it returns |
+| `POST /api/cities/{id}/incidents` · `GET /api/runs/{run}/events` | Start an incident; follow it over Server-Sent Events |
+| `POST /api/runs/{run}/approvals` | Approve or reject (`X-Role: approver`, demo RBAC) |
+| `GET /api/audit/entries` · `/key` · `/verify` | The signed hash chain, its public key, full re-verification |
+
+Interactive docs at <http://localhost:8000/docs>.
 
 ## Repository layout
 
@@ -79,11 +103,12 @@ Every dotted number opens a provenance drawer with the tool call, arguments and 
 backend/src/urbanshield/
   schemas.py   data contracts shared by every module
   city/        city twin on Mangaluru streets, attack + dependency graphs, pinned CVE/KEV/EPSS feed
-  sim/         vectorised Monte Carlo with correlated campaigns
+  sim/         vectorised Monte Carlo with correlated campaigns and per-hop replay
   opt/         CVaR MILP (SciPy/HiGHS), baselines, ablations, held-out evaluation
   agents/      Sentinel, Analyst, Planner, Red-Team, orchestrator, provider-agnostic LLM adapter
-  guard/       quarantine, tool allowlists, Auditor, hash-chained audit log
-  api/         FastAPI + Server-Sent Events
+  guard/       quarantine, Auditor, hash-chained audit log, Enforcer (signed policy), corridor interlock
+  api/         FastAPI + Server-Sent Events, two-cities replay, budget frontier
+backend/scripts/  evaluation, benchmark, frontier and trace-recording scripts
 frontend/      React + Vite + Tailwind + Leaflet; hand-built SVG charts
 docs/          architecture, assumptions, evaluation, demo script, team manuals
 ```
@@ -91,34 +116,37 @@ docs/          architecture, assumptions, evaluation, demo script, team manuals
 ## Tests
 
 ```bash
-cd backend && uv run pytest        # property tests: feasibility, CVaR maths, hash-chain tamper detection, …
+cd backend && uv run pytest        # 256 tests: feasibility, CVaR maths, replay, signed policy, interlock, hash-chain tamper, API
+cd frontend && npm test            # event folding and risk derivations
 ```
+
+CI runs ruff (lint + format), pytest, oxlint and the type-checked build on every push.
 
 ## Running it honestly
 
-- `GET /api/health` reports `data` (`placeholder` until the city and optimiser modules are in, then `live`),
-  `llm_mode` (`mock` agents are rule-based stand-ins and are labelled as such), `audit_key`
-  (`ephemeral` when `AUDIT_SIGNING_KEY` is unset) and `audit` (incidents are refused while the audit log is unavailable).
+- `GET /api/health` reports `data` (`placeholder` until the engine is ready, then `live`), `llm_mode` (`mock` agents are
+  rule-based stand-ins and are labelled as such), `audit_key` (`ephemeral` when `AUDIT_SIGNING_KEY` is unset) and
+  `audit` (incidents and enforcer commands are refused while the audit log is unavailable: fail closed).
 - Approvals need the header `X-Role: approver`. This is **demo RBAC**, not authentication.
-- Every agent event is appended to the signed hash chain before it is streamed. `GET /api/audit/verify` re-checks every
-  hash and signature; `GET /api/audit/key` publishes the Ed25519 verify key.
+- Every agent event and enforcer verdict is appended to the signed hash chain before it is shown. `GET /api/audit/verify`
+  re-checks every hash and signature; `GET /api/audit/key` publishes the Ed25519 verify key.
 
 ### Limitations
 
+- The Enforcer is a **simulated** gateway over the twin's flow table. It shows what the control plane would push to real
+  network gear (firewall rules, management-port ACLs, credential rotation); it does not configure real devices.
+- The interlock's rules are a small, readable set (conflicting greens, remote hold time, corridor continuity); a real
+  deployment would take them from the signal timing plan.
 - **Tail truncation** (deleting the newest log rows) is detected only against a head this server has already
-  published (`/api/audit/verify`, and the head carried by every apply event). Production would anchor heads in an
-  external transparency log or notary.
-- The quarantine is structural: raw advisory text reaches one tool-less extraction call and nothing else. The
-  extracted CVSS is checked against the pinned feed, and the firmware family and version range device by device
-  against the inventory. Fields nothing pinned can contradict (the product name) drive no decision.
-- The planner treats the savings of different controls as additive (each calibrated by re-simulation); the
-  overlap makes its predictions optimistic, which docs/EVALS.md reports as the model gap. Every reported number
-  is the full simulator's, on held-out scenarios.
-- The approval role header and the run registry are in-memory demo mechanisms; a restart forgets running incidents.
+  published. Production would anchor heads in an external transparency log or notary.
+- The planner treats the savings of different controls as additive (each calibrated by re-simulation); docs/EVALS.md
+  reports the resulting model gap. Every reported number is the full simulator's, on held-out scenarios.
+- The control-plane signing key, the approval role header and the run registry are in-memory demo mechanisms; a restart
+  forgets running incidents and resets the Enforcer to policy v0.
 
 ## Scope and ethics
 
-Everything runs against a **simulated** city. UrbanShield does not scan, probe or exploit real systems; attacks are probabilities on a graph and there is no exploit code. Vendor names are fictional; CVE, KEV and EPSS records are real public data used to seed vulnerability profiles. A person approves any plan before it is marked as applied.
+Everything runs against a **simulated** city. UrbanShield does not scan, probe or exploit real systems; attacks are probabilities on a graph and there is no exploit code. Vendor names are fictional; CVE, KEV and EPSS records are real public data used to seed vulnerability profiles. Only low-risk controls with no downtime apply automatically; a person approves anything with downtime.
 
 ## Team
 

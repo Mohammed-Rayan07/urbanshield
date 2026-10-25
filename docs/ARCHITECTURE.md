@@ -20,7 +20,11 @@ flowchart LR
   Agents -->|tool calls| Tools
   PLA --> AUD[Auditor — plain code: claims ↔ tool results]
   AUD --> GATE{Autonomy policy / human approval}
-  GATE --> APPLY[Apply in twin → re-simulate] --> LOG[(Audit log · hash chain · Ed25519)]
+  GATE --> APPLY[Apply in twin] --> SIGN[Compile + sign policy · control-plane Ed25519 key]
+  SIGN --> ENF[Enforcer · deny-by-default gateway · verify key only]
+  ENF --> VER[Corridor paths before → after · re-simulate] --> LOG[(Audit log · hash chain · Ed25519)]
+  CMD[/Signal commands — untrusted/] --> ENF
+  ENF -. every command .-> IL[Corridor interlock · plain-code safety rules]
   Agents --> LOG
 ```
 
@@ -32,10 +36,16 @@ flowchart LR
 3. **Untrusted text never reaches a planner.** Advisories become a typed `Advisory` in a tool-less call,
    are cross-checked against a pinned feed, and can only trigger re-scoring.
 4. **Least privilege.** Each agent has an explicit tool allowlist; the Red-Team is read-only; only the
-   approval path can apply a plan.
-5. **Verify outcomes.** Plans are re-simulated without the linear approximation; the Red-Team attacks the
+   apply step can install policy (low-risk, no-downtime controls auto-apply; anything with downtime needs
+   an approver), and there is no API route that pushes policy.
+5. **Enforce, then verify.** Applied controls compile to concrete rules (deny flow, close management,
+   rotate credentials, schedule firmware, filter CVE), signed with a control-plane key separate from the
+   audit key. The Enforcer refuses a bad signature, another city's policy or an older version, then checks
+   on its own flow table whether an internet-exposed device can still reach a corridor signal. Every signal
+   command passes the corridor interlock, which judges the command, not the credentials.
+6. **Verify outcomes.** Plans are re-simulated without the linear approximation; the Red-Team attacks the
    chosen plan; results are reported on held-out scenarios.
-6. **Deterministic and replayable.** Fixed seeds, cached LLM responses, `replay` mode for offline demos.
+7. **Deterministic and replayable.** Fixed seeds, cached LLM responses, `replay` mode for offline demos.
 
 ## Scaling
 
@@ -54,6 +64,8 @@ flowchart LR
 | LLM01 Prompt injection | Quarantine + typed extraction + feed cross-check + no state-changing fields |
 | LLM05 Improper output handling | Pydantic validation on every tool boundary; numbers only from tools |
 | LLM06 Excessive agency | Allowlists, read-only Red-Team, human approval for anything with downtime |
+| Stolen operator credentials | Corridor interlock vetoes unsafe signal commands whoever sends them; closed management refuses remote ones |
+| Rogue or replayed policy | Policy signed by a separate control-plane key; gateway holds only the verify key; no rollback to older versions |
 | LLM09 Misinformation | Auditor rejects ungrounded claims; rejection rate reported |
 | Repudiation / tampering | Hash-chained, signed audit log with a verify endpoint |
 | Data poisoning | Feed snapshot pinned by SHA-256, refused if changed |
